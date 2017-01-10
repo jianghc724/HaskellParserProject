@@ -1,11 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
-
-module Lib where
-
+module Lib 
+    ( someFunc
+    ) where
+        
 import Control.Applicative
 import Data.Attoparsec.Text
 import Data.Functor
 import Data.Text
+
+
+
+someFunc :: IO()
+someFunc = putStrLn "someFunc"
+
 
 
 data Expr
