@@ -2,7 +2,6 @@ module REPL where
 
 import qualified Data.Map as M
 import System.IO
-import BoolExpr
 import Data.Attoparsec.Text
 import Data.Functor
 

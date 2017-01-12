@@ -1,6 +1,6 @@
 module Lib where
 
-import BoolExpr
+import Boolean
 import PrettyTreePrint
 import REPL
 import qualified Data.Map as M
@@ -8,7 +8,6 @@ import qualified Data.Map as M
 import Control.Applicative
 import Control.Monad.State
 import System.Environment
-import ExprTree
 
 data Option = Option {
     inPath :: String,
