@@ -16,9 +16,9 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
-  other-modules:       BoolExpr
-                       PrettyTreePrint
-                       REPL
+  other-modules:       Boolean
+                     , PrettyTreePrint
+                     , REPL
   build-depends:       base >= 4.7 && < 5
                      , text
                      , attoparsec

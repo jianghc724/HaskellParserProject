@@ -3,52 +3,7 @@
 
 module List where
 
-import Control.Applicative
-import Data.Attoparsec.Text
-import Data.Functor
-
-lexeme :: Parser a -> Parser a
-lexeme p = do
-    skipSpace
-    p
-
-data Expr
-    = Nil
-    | Cons Expr Expr
-    | Car Expr
-    | Cdr Expr
-    | CharLit
-    | StringLit
-    deriving Show
-
-nilListParser :: Parser Expr
-nilListParser = lexeme $ string "()" $> Nil
-
-consParser :: Parser Expr
-consParser = do
-    lexeme $ char '('
-    lexeme $ string "cons"
-    expr1 <- exprParser
-    expr2 <- exprParser
-    lexeme $ char ')'
-    return (Cons expr1 expr2)
-
-carParser :: Parser Expr
-carParser = do
-    lexeme $ char '('
-    lexeme $ string "car"
-    expr <- exprParser
-    lexeme $ char ')'
-    return (Car expr)
-    
-cdrParser :: Parser Expr
-cdrParser = do
-    lexeme $ char '('
-    expr1 <- exprParser
-    lexeme $ string "cdr"
-    expr2 <- exprParser
-    lexeme $ char ')'
-    return (Cdr expr)
+import Parser
 
 eval :: Expr -> Bool
 eval FalseLit = False
