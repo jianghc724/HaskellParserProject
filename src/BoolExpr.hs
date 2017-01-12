@@ -7,6 +7,7 @@ import Control.Applicative
 import Data.Attoparsec.Text
 import Data.Functor
 import ExprTree
+
     
 exprParser :: Parser Expr
 exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
