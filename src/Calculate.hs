@@ -12,22 +12,10 @@ data Number
 	| Integer.Integer
 	deriving Show
 
-data Expression
-	= (+ Expression Expression) 
-	| (- Expression Expression) 
-	| (* Expression Expression) 
-	| (/ Expression Expression)
-	| (= Expression Expression) 
-	| (< Expression Expression) 
-	| (<= Expression Expression) 
-	| (> Expression Expression) 
-	| (>= Expression Expression)
-	deriving Show
-
-calcuParser :: Parser Expression
+calcuParser :: Parser Expr
 calcuParser = addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser <|> lesParser <|> leqParser <|> morParser <|> mqlParser
 
-addParser :: Parser Expression
+addParser :: Parser Expr
 addParser = do
     lexeme $ char '('
     lexeme $ char "+"
@@ -36,7 +24,7 @@ addParser = do
     lexeme $ char ')'
     return (+ expr1 expr2)
 
-subParser :: Parser Expression
+subParser :: Parser Expr
 subParser = do
     lexeme $ char '('
     lexeme $ char "-"
@@ -45,7 +33,7 @@ subParser = do
     lexeme $ char ')'
     return (- expr1 expr2)
 
-mulParser :: Parser Expression
+mulParser :: Parser Expr
 mulParser = do
     lexeme $ char '('
     lexeme $ char "*"
@@ -54,7 +42,7 @@ mulParser = do
     lexeme $ char ')'
     return (* expr1 expr2)
 
-divParser :: Parser Expression
+divParser :: Parser Expr
 divParser = do
     lexeme $ char '('
     lexeme $ char "/"
@@ -63,7 +51,7 @@ divParser = do
     lexeme $ char ')'
     return (/ expr1 expr2)
 
-eqlParser :: Parser Expression
+eqlParser :: Parser Expr
 eqlParser = do
     lexeme $ char '('
     lexeme $ char "="
@@ -72,7 +60,7 @@ eqlParser = do
     lexeme $ char ')'
     return (= expr1 expr2)
 
-lesParser :: Parser Expression
+lesParser :: Parser Expr
 lesParser = do
     lexeme $ char '('
     lexeme $ char "<"
@@ -81,7 +69,7 @@ lesParser = do
     lexeme $ char ')'
     return (< expr1 expr2)
 
-leqParser :: Parser Expression
+leqParser :: Parser Expr
 leqParser = do
     lexeme $ char '('
     lexeme $ string "<="
@@ -90,7 +78,7 @@ leqParser = do
     lexeme $ char ')'
     return (<= expr1 expr2)
 
-morParser :: Parser Expression
+morParser :: Parser Expr
 morParser = do
     lexeme $ char '('
     lexeme $ char ">"
@@ -99,7 +87,7 @@ morParser = do
     lexeme $ char ')'
     return (> expr1 expr2) 
 
-mqlParser :: Parser Expression
+mqlParser :: Parser Expr
 mqlParser = do
     lexeme $ char '('
     lexeme $ string ">="

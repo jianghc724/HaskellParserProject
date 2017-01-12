@@ -1,101 +1,64 @@
-{-# LANGUAGE OverloadedStrings #-}
--- 若在 ghci 中执行，需 :set -XOverloadedStrings
-
 module Lib where
 
+import BoolExpr
+import PrettyTreePrint
+import REPL
+import qualified Data.Map as M
+
 import Control.Applicative
-import Data.Attoparsec.Text
-import Data.Functor
+import Control.Monad.State
+import System.Environment
 
-data Expr
-    = FalseLit
-    | TrueLit
-    | Not Expr
-    | And Expr Expr
-    | Or Expr Expr
-    deriving Show 
-    
-exprParser :: Parser Expr
-exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
+data Option = Option {
+    inPath :: String,
+    outPath :: String
+}
+    deriving Show
 
-falseParser :: Parser Expr
-falseParser = lexeme $ string "False" $> FalseLit
+type Parser a = StateT [String] Maybe a
 
-trueParser :: Parser Expr
-trueParser = lexeme $ string "True" $> TrueLit
+parseFlag :: String -> Parser String
+parseFlag f = do
+    args <- get
+    case args of
+        [] -> empty
+        (arg : args')
+            | arg == "--" ++ f -> do
+                put args'
+                return f
+            | otherwise -> empty
+            
+parseField :: String -> Parser String
+parseField f = do
+    parseFlag f
+    args <- get
+    case args of
+        [] -> empty
+        (arg : args') -> do
+            put args'
+            return arg
+            
+parseInPath :: Parser String
+parseInPath = parseField "in"
 
-notParser :: Parser Expr
-notParser = do
-    lexeme $ char '('
-    lexeme $ string "not"
-    expr <- exprParser
-    lexeme $ char ')'
-    return (Not expr)
-    
-andParser :: Parser Expr
-andParser = do
-    lexeme $ char '('
-    expr1 <- exprParser
-    lexeme $ string "and"
-    expr2 <- exprParser
-    lexeme $ char ')'
-    return (And expr1 expr2)
-    
-orParser :: Parser Expr
-orParser = do
-    lexeme $ char '('
-    expr1 <- exprParser
-    lexeme $ string "or"
-    expr2 <- exprParser
-    lexeme $ char ')'
-    return (Or expr1 expr2)
-    
-lexeme :: Parser a -> Parser a
-lexeme p = do
-    skipSpace
-    p
+parseOutPath :: Parser String
+parseOutPath = parseField "out"
 
-eval :: Expr -> Bool
-eval FalseLit = False
-eval TrueLit = True
-eval (Not p) = not $ eval p
-eval (And p q) = (eval p) && (eval q) 
-eval (Or p q) = (eval p) || (eval q)
-
--- designed for parseOnly
---   :: Data.Attoparsec.Text.Parser a
---      -> Data.Text.Internal.Text -> Either String a
-evalWithErrorThrowing :: Either String Expr -> String
-evalWithErrorThrowing (Left errStr) = "not a valid bool expr: " ++ errStr
-evalWithErrorThrowing (Right expr) = show $ eval expr
+parseOption :: Parser Option
+parseOption = p0 <|> p1 where
+    p0 = do
+        i <- parseInPath
+        o <- parseOutPath
+        return (Option i o)
+        
+    p1 = do
+        o <- parseOutPath
+        i <- parseInPath
+        return (Option i o)
 
 defMain :: IO ()
 defMain = do
-    putStrLn $ show $ parseOnly notParser "(not True)"
-    putStrLn $ show $ parse notParser "(not True)"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly notParser "(nXXX True)"
-    putStrLn $ show $ parse notParser "(nXXX True)"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly notParser "(not Tr"
-    putStrLn $ show $ parse notParser "(not Tr"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly notParser "(not True)   MORE"
-    putStrLn $ show $ parse notParser "(not True)   MORE"
-    putStrLn "--------------"
-    putStrLn $ show $ parseOnly exprParser "(not True)"
-    putStrLn $ show $ parse exprParser "(not True)"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly exprParser "(nXXX True)"
-    putStrLn $ show $ parse exprParser "(nXXX True)"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly exprParser "(not Tr"
-    putStrLn $ show $ parse exprParser "(not Tr"
-    putStrLn "-------"
-    putStrLn $ show $ parseOnly exprParser "(not True)   MORE"
-    putStrLn $ show $ parse exprParser "(not True)   MORE"
-    putStrLn "--------------"
-    putStrLn $ show $ evalWithErrorThrowing $ parseOnly exprParser "((not True) or False)"
-    putStrLn $ show $ evalWithErrorThrowing $ parseOnly exprParser "(not Tr"
-    putStrLn $ show $ evalWithErrorThrowing $ parseOnly exprParser "(nXXX True)"
-    putStrLn $ show $ evalWithErrorThrowing $ parseOnly exprParser "(not True)   MORE"
+    args <- getArgs
+    print $ runStateT parseOption args
+    putStrLn "This is a simple REPL. Be my guest!"
+    mainLoop (M.empty)
