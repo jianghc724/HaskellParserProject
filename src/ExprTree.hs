@@ -24,6 +24,12 @@ data Expr
 	| <= Expr Expr 
 	| > Expr Expr 
 	| >= Expr Expr
+    | NilLit
+    | Cons Expr Expr
+    | Car Expr
+    | Cdr Expr
+    | CharLit
+    | StringLit
     deriving Show 
 
 lexeme :: Parser a -> Parser a
