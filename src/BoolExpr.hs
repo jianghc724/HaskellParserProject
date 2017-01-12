@@ -42,7 +42,6 @@ orParser = do
     expr2 <- exprParser
     lexeme $ char ')'
     return (Or expr1 expr2)
-    
 
 eval :: Expr -> Bool
 eval FalseLit = False

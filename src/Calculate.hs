@@ -6,6 +6,7 @@ module Calculate where
 import Control.Applicative
 import Data.Attoparsec.Text
 import Data.Functor
+import ExprTree
 
 data Number
 	= Integer
