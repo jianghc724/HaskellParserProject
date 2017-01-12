@@ -6,6 +6,6 @@ module Calculate where
 import Parser
 
 data Number
-	= Integer
-	| Integer.Integer
-	deriving Show
+    = Integer
+    | Double
+    deriving Show
