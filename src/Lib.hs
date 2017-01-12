@@ -13,7 +13,7 @@ data Expr
     | Not Expr
     | And Expr Expr
     | Or Expr Expr
-    deriving Show
+    deriving Show 
     
 exprParser :: Parser Expr
 exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
