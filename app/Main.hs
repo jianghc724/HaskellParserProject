@@ -1,7 +1,7 @@
 module Main where
 
 import Lib
-import Calculate
+import While
 
 main :: IO ()
 main = defMain

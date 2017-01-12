@@ -19,6 +19,8 @@ library
   other-modules:       Boolean
                      , PrettyTreePrint
                      , REPL
+                     , While
+                     , Calculate
   build-depends:       base >= 4.7 && < 5
                      , text
                      , attoparsec
