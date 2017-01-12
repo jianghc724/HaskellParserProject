@@ -40,6 +40,7 @@ executable HaskellParserProject
                      , GenericPretty
                      , mtl
                      , HaskellParserProject
+                     , containers
   default-language:    Haskell2010
 
 test-suite HaskellParserProject-test
@@ -48,6 +49,7 @@ test-suite HaskellParserProject-test
   main-is:             Spec.hs
   build-depends:       base
                      , HaskellParserProject
+                     , containers
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

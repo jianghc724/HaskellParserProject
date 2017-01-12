@@ -6,14 +6,8 @@ module BoolExpr where
 import Control.Applicative
 import Data.Attoparsec.Text
 import Data.Functor
+import ExprTree
 
-data Expr
-    = FalseLit
-    | TrueLit
-    | Not Expr
-    | And Expr Expr
-    | Or Expr Expr
-    deriving Show
     
 exprParser :: Parser Expr
 exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
@@ -49,11 +43,6 @@ orParser = do
     expr2 <- exprParser
     lexeme $ char ')'
     return (Or expr1 expr2)
-    
-lexeme :: Parser a -> Parser a
-lexeme p = do
-    skipSpace
-    p
 
 eval :: Expr -> Bool
 eval FalseLit = False
