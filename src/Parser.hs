@@ -66,7 +66,7 @@ intParser = do
 
 douParser :: Parser Expr
 douParser = do 
-    d <- double 
+    d <- lexeme $ double 
     return (Dou d) 
 
             
@@ -297,11 +297,35 @@ lexeme p = do
     skipSpace
     p
 
+eval :: Expr -> Bool
+eval FalseLit = False
+eval TrueLit = True
+eval (Not p) = not $ eval p
+eval (And p q) = (eval p) && (eval q) 
+eval (Or p q) = (eval p) || (eval q)
+eval (Eq p q) = (douEval p) == (douEval q)
+eval (Lt p q) = (douEval p) < (douEval q)
+eval (Le p q) = (douEval p) <= (douEval q)
+eval (Gt p q) = (douEval p) > (douEval q)
+eval (Ge p q) = (douEval p) >= (douEval q)
+
+douEval :: Expr -> Double
+douEval (Dou p) = p
+douEval (Add p q) = (douEval p) + (douEval q)
+douEval (Sub p q) = (douEval p) - (douEval q)
+douEval (Mul p q) = (douEval p) * (douEval q)
+douEval (Div p q) = (douEval p) / (douEval q)
+
+getDoubleExpr :: Either String Expr -> String
+getDoubleExpr (Left errStr) =  "not a valid add expr: " ++ errStr
+getDoubleExpr (Right expr) = show $ douEval expr
 
 defMain :: IO ()
 defMain = do
     putStrLn $ show $ parseOnly notParser "(not True)"
-    putStrLn $ show $ parseOnly addParser "(+ 1 2 )"
+    putStrLn $ getDoubleExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
+    putStrLn $ getDoubleExpr $ parseOnly mulParser "(* 2 2.2 )" 
+    putStrLn $ getDoubleExpr $ parseOnly divParser "(/ 10 2 )" 
     putStrLn $ show $ parseOnly exprParser "12.3"
     putStrLn "-------"
 

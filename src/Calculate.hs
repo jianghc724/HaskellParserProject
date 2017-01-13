@@ -5,9 +5,7 @@ module Calculate where
 
 import Parser
 
-douEval :: Expr -> Double
-douEval (Dou p) = p
-douEval (Add p q) = (douEval p) + (douEval q)
+
 --eval  = p + q
 --eval (Sub p q) = p - q
 --eval (Mul p q) = p * q
