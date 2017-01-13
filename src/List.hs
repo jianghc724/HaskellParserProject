@@ -5,9 +5,14 @@ module List where
 
 import Parser
 
-eval :: Expr -> Bool
-eval FalseLit = False
-eval TrueLit = True
+eval :: Expr -> [a]
+eval NilLit = []
+eval Char CharLit = CharLit:[]
+eval String StringLit = StringLit
+eval Cons Expr1 Expr2
+| eval Expr1 == [] || eval Expr2 == [] = (eval Expr1) ++ (eval Expr2)
+| type (eval Expr1) == type (eval Expr2) = (eval Expr1) ++ (eval Expr2)
+|
 eval (Not p) = not $ eval p
 eval (And p q) = (eval p) && (eval q) 
 eval (Or p q) = (eval p) || (eval q)

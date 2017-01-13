@@ -25,8 +25,8 @@ data Expr
     | Cons Expr Expr
     | Car Expr
     | Cdr Expr
-    | CharLit
-    | StringLit
+    | Char CharLit
+    | Str StringLit
     | Int Integer
     | Dou Double
     deriving Show
@@ -199,7 +199,7 @@ mqlParser = do
     return (Ge expr1 expr2)
 
 nilListParser :: Parser Expr
-nilListParser = lexeme $ string "()" $> NilLit
+nilListParser = lexeme $ string "nil" $> NilLit
 
 consParser :: Parser Expr
 consParser = do
@@ -231,14 +231,14 @@ charParser = do
     lexeme $ char '\'' 
     c <- anyChar
     lexeme $ char '\''
-    return CharLit
+    return (Char c)
 
 stringParser :: Parser Expr
 stringParser = do
     lexeme $ char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
     lexeme $ char '\"'
-    return StringLit
+    return (String s)
     
 setParser :: Parser Statement
 setParser = do
