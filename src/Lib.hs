@@ -1,7 +1,6 @@
 module Lib where
 
 import Boolean
-import PrettyTreePrint
 import REPL
 import qualified Data.Map as M
 
