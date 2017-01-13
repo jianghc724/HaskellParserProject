@@ -21,6 +21,12 @@ data Expr
     | Le Expr Expr 
     | Gt Expr Expr 
     | Ge Expr Expr
+    | NilLit
+    | Cons Expr Expr
+    | Car Expr
+    | Cdr Expr
+    | CharLit
+    | StringLit
     deriving Show
 
 data Statement
@@ -39,9 +45,10 @@ data Statements
 data Program
     = Pro Statement
     deriving Show
+>>>>>>> 2416c1206791afc59af451fba1d462a130739c71
 
 exprParser :: Parser Expr
-exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
+exprParser = nilListParser <|> consParser <|> carParser <|> cdrParser <|> charParser <|> stringParser <|> falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
             <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser <|> lesParser <|> leqParser <|> morParser <|> mqlParser
             <|> variableParser
             
@@ -171,6 +178,48 @@ mqlParser = do
     expr2 <- exprParser
     lexeme $ char ')'
     return (Ge expr1 expr2)
+
+nilListParser :: Parser Expr
+nilListParser = lexeme $ string "()" $> NilLit
+
+consParser :: Parser Expr
+consParser = do
+    lexeme $ char '('
+    lexeme $ string "cons"
+    expr1 <- exprParser
+    expr2 <- exprParser
+    lexeme $ char ')'
+    return (Cons expr1 expr2)
+
+carParser :: Parser Expr
+carParser = do
+    lexeme $ char '('
+    lexeme $ string "car"
+    expr <- exprParser
+    lexeme $ char ')'
+    return (Car expr)
+    
+cdrParser :: Parser Expr
+cdrParser = do
+    lexeme $ char '('
+    lexeme $ string "cdr"
+    expr <- exprParser
+    lexeme $ char ')'
+    return (Cdr expr)
+
+charParser :: Parser Expr
+charParser = do
+    lexeme $ char '\'' 
+    c <- anyChar
+    lexeme $ char '\''
+    return CharLit
+
+stringParser :: Parser Expr
+stringParser = do
+    lexeme $ char '\"'
+    s <- takeWhile1 (\x -> if x == '\"' then True else False)
+    lexeme $ char '\"'
+    return StringLit
     
 setParser :: Parser Statement
 setParser = do
