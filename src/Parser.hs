@@ -45,7 +45,6 @@ data Statements
 data Program
     = Pro Statement
     deriving Show
->>>>>>> 2416c1206791afc59af451fba1d462a130739c71
 
 exprParser :: Parser Expr
 exprParser = nilListParser <|> consParser <|> carParser <|> cdrParser <|> charParser <|> stringParser <|> falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
