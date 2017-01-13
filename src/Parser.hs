@@ -211,7 +211,6 @@ statlistParser = do
     lexeme $ string "begin"
     stat <- statParser
     stats <- statsParser
-    lexeme $ char ')'
     return (Begin stat stats)
     
 statslistParser :: Parser Statements
@@ -222,6 +221,7 @@ statslistParser = do
     
 nilParser :: Parser Statements
 nilParser = do
+    lexeme $ char ')'
     return Nil
  
 lexeme :: Parser a -> Parser a
