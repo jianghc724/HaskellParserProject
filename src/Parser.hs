@@ -8,6 +8,7 @@ import Data.Functor
 data Expr
     = FalseLit
     | TrueLit
+    | VarLit
     | Not Expr
     | And Expr Expr
     | Or Expr Expr
@@ -20,18 +21,43 @@ data Expr
     | Le Expr Expr 
     | Gt Expr Expr 
     | Ge Expr Expr
+    | NilLit
+    | Cons Expr Expr
+    | Car Expr
+    | Cdr Expr
+    | CharLit
+    | StringLit
     | Int Integer
     | Dou Double
-    deriving Show 
+    deriving Show
+
+data Statement
+    = Begin Statement Statements
+    | Skip
+    | Set Expr Expr
+    | If Expr Statement Statement
+    | While Expr Statement
+    deriving Show
+
+data Statements
+    = Nil
+    | List Statement Statements
+    deriving Show
+    
+data Program
+    = Pro Statement
+    deriving Show
 
 --data Number = Integer
 --    | Double
 --    deriving Show
 
 exprParser :: Parser Expr
+
 exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
             <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser 
             <|> lesParser <|> leqParser <|> morParser <|> mqlParser <|> douParser <|> intParser
+            <|> variableParser
 
 intParser :: Parser Expr
 intParser = do 
@@ -43,6 +69,22 @@ douParser = do
     d <- double 
     return (Dou d) 
 
+            
+statParser :: Parser Statement
+statParser = setParser <|> skipParser <|> ifParser <|> whilestatParser <|> statlistParser
+
+
+statsParser :: Parser Statements
+statsParser = statslistParser <|> nilParser
+
+whileParser :: Parser Program
+whileParser = do
+    stat <- statParser
+    return (Pro stat)
+            
+variableParser :: Parser Expr
+variableParser = lexeme $ string "a" $> VarLit
+            
 falseParser :: Parser Expr
 falseParser = lexeme $ string "False" $> FalseLit
 
@@ -155,7 +197,101 @@ mqlParser = do
     expr2 <- exprParser
     lexeme $ char ')'
     return (Ge expr1 expr2)
+
+nilListParser :: Parser Expr
+nilListParser = lexeme $ string "()" $> NilLit
+
+consParser :: Parser Expr
+consParser = do
+    lexeme $ char '('
+    lexeme $ string "cons"
+    expr1 <- exprParser
+    expr2 <- exprParser
+    lexeme $ char ')'
+    return (Cons expr1 expr2)
+
+carParser :: Parser Expr
+carParser = do
+    lexeme $ char '('
+    lexeme $ string "car"
+    expr <- exprParser
+    lexeme $ char ')'
+    return (Car expr)
     
+cdrParser :: Parser Expr
+cdrParser = do
+    lexeme $ char '('
+    lexeme $ string "cdr"
+    expr <- exprParser
+    lexeme $ char ')'
+    return (Cdr expr)
+
+charParser :: Parser Expr
+charParser = do
+    lexeme $ char '\'' 
+    c <- anyChar
+    lexeme $ char '\''
+    return CharLit
+
+stringParser :: Parser Expr
+stringParser = do
+    lexeme $ char '\"'
+    s <- takeWhile1 (\x -> if x == '\"' then True else False)
+    lexeme $ char '\"'
+    return StringLit
+    
+setParser :: Parser Statement
+setParser = do
+    lexeme $ char '('
+    lexeme $ string "set!"
+    var <- variableParser
+    expr <- exprParser
+    lexeme $ char ')'
+    return (Set var expr)
+    
+skipParser :: Parser Statement
+skipParser = do
+    lexeme $ string "skip"
+    return Skip
+    
+ifParser :: Parser Statement
+ifParser = do
+    lexeme $ char '('
+    lexeme $ string "if"
+    expr <- exprParser
+    stat1 <- statParser
+    stat2 <- statParser
+    lexeme $ char ')'
+    return (If expr stat1 stat2)
+    
+whilestatParser :: Parser Statement
+whilestatParser = do
+    lexeme $ char '('
+    lexeme $ string "while"
+    expr <- exprParser
+    stat <- statParser
+    lexeme $ char ')'
+    return (While expr stat)
+    
+statlistParser :: Parser Statement
+statlistParser = do
+    lexeme $ char '('
+    lexeme $ string "begin"
+    stat <- statParser
+    stats <- statsParser
+    return (Begin stat stats)
+    
+statslistParser :: Parser Statements
+statslistParser = do
+    stat <- statParser
+    stats <- statsParser
+    return (List stat stats)
+    
+nilParser :: Parser Statements
+nilParser = do
+    lexeme $ char ')'
+    return Nil
+ 
 lexeme :: Parser a -> Parser a
 lexeme p = do
     skipSpace
