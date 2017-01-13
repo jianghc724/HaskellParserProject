@@ -27,6 +27,8 @@ data Expr
     | Cdr Expr
     | CharLit
     | StringLit
+    | Int Integer
+    | Dou Double
     deriving Show
 
 data Statement
@@ -46,13 +48,31 @@ data Program
     = Pro Statement
     deriving Show
 
+--data Number = Integer
+--    | Double
+--    deriving Show
+
 exprParser :: Parser Expr
-exprParser = nilListParser <|> consParser <|> carParser <|> cdrParser <|> charParser <|> stringParser <|> falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
-            <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser <|> lesParser <|> leqParser <|> morParser <|> mqlParser
+
+exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
+            <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser 
+            <|> lesParser <|> leqParser <|> morParser <|> mqlParser <|> douParser <|> intParser
             <|> variableParser
+
+intParser :: Parser Expr
+intParser = do 
+    ds <- many1 digit
+    return (Int (read ds))
+
+douParser :: Parser Expr
+douParser = do 
+    d <- lexeme $ double 
+    return (Dou d) 
+
             
 statParser :: Parser Statement
 statParser = setParser <|> skipParser <|> ifParser <|> whilestatParser <|> statlistParser
+
 
 statsParser :: Parser Statements
 statsParser = statslistParser <|> nilParser
@@ -276,3 +296,22 @@ lexeme :: Parser a -> Parser a
 lexeme p = do
     skipSpace
     p
+douEval :: Expr -> Double
+douEval (Dou p) = p
+douEval (Add p q) = (douEval p) + (douEval q)
+
+getDoubleExpr :: Either String Expr -> String
+getDoubleExpr (Left errStr) =  "not a valid add expr: " ++ errStr
+getDoubleExpr (Right expr) = show $ douEval expr
+
+defMain :: IO ()
+defMain = do
+    putStrLn $ show $ parseOnly notParser "(not True)"
+    putStrLn $ getDoubleExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
+    putStrLn $ show $ parseOnly exprParser "12.3"
+    putStrLn "-------"
+
+
+
+
+
