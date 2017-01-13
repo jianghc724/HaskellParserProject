@@ -20,11 +20,28 @@ data Expr
     | Le Expr Expr 
     | Gt Expr Expr 
     | Ge Expr Expr
+    | Int Integer
+    | Dou Double
     deriving Show 
+
+--data Number = Integer
+--    | Double
+--    deriving Show
 
 exprParser :: Parser Expr
 exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
-            <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser <|> lesParser <|> leqParser <|> morParser <|> mqlParser
+            <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser 
+            <|> lesParser <|> leqParser <|> morParser <|> mqlParser <|> douParser <|> intParser
+
+intParser :: Parser Expr
+intParser = do 
+    ds <- many1 digit
+    return (Int (read ds))
+
+douParser :: Parser Expr
+douParser = do 
+    d <- double 
+    return (Dou d) 
 
 falseParser :: Parser Expr
 falseParser = lexeme $ string "False" $> FalseLit
@@ -143,3 +160,16 @@ lexeme :: Parser a -> Parser a
 lexeme p = do
     skipSpace
     p
+
+
+defMain :: IO ()
+defMain = do
+    putStrLn $ show $ parseOnly notParser "(not True)"
+    putStrLn $ show $ parseOnly addParser "(+ 1 2 )"
+    putStrLn $ show $ parseOnly exprParser "12.3"
+    putStrLn "-------"
+
+
+
+
+
