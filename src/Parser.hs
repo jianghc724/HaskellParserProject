@@ -355,20 +355,23 @@ eval (Lt p q) = ExprBool ((evalDou (eval p)) < (evalDou (eval q)))
 eval (Le p q) = ExprBool ((evalDou (eval p)) <= (evalDou (eval q)))
 eval (Gt p q) = ExprBool ((evalDou (eval p)) > (evalDou (eval q)))
 eval (Ge p q) = ExprBool ((evalDou (eval p)) >= (evalDou (eval q)))
-
 eval (Dou p) = ExprDou p
 eval (Add p q) = ExprDou ((evalDou (eval p)) + (evalDou (eval q)))
 eval (Sub p q) = ExprDou ((evalDou (eval p)) - (evalDou (eval q)))
 eval (Mul p q) = ExprDou ((evalDou (eval p)) * (evalDou (eval q)))
 eval (Div p q) = ExprDou ((evalDou (eval p)) / (evalDou (eval q)))
 
-eval NilLit = ExprCons ()
+eval NilLit = ExprCons ()::(ExprVal, ExprVal)
 eval Ch c = ExprChar c
-eval St s = ExprString s 
+eval St s = ExprString s
+eval Cons (Dou d) NilLit = eval (Dou d)
+eval Cons FalseLit NilLit = eval FalseLit
+eval Cons TrueLit NilLit = eval TrueLit
 eval Cons e1 e2 = ExprCons (eval e1, eval e2)
-eval Car NilLit = ExprCons ()
-eval Car (Cons e1 e2) = eval e1
-eval Cdr (Cons e1 e2) = eval e2
+eval Car NilLit = ExprCons ()::(ExprVal, ExprVal)
+eval Car Cons e1 e2 = eval e1
+eval Car NilLit = ExprCons ()::(ExprVal, ExprVal)
+eval Cdr Cons e1 e2 = eval e2
 
 getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
