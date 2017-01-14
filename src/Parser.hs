@@ -312,9 +312,9 @@ lexeme p = do
     skipSpace
     p
 
-data ExprVal = ExprNum Num | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal)
+data ExprVal = ExprDou Double | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal)
 instance Show ExprVal where
-    show ExprNum num = show num
+    show ExprDou num = show num
     show ExprBool bool = show bool
     show ExprChar char = show char
     show ExprString string = show string
@@ -322,7 +322,7 @@ instance Show ExprVal where
     show ExprCons pair = show pair
 
 instance Eq ExprVal where
-    (==) (ExprNum num1) (ExprNum num2) = num1 == num2
+    (==) (ExprDou num1) (ExprDou num2) = num1 == num2
     (==) (ExprBool bool1) (ExprBool bool2) = bool1 == bool2
     (==) (ExprChar char1) (ExprChar char2) = char1 == char2
     (==) (ExprString string1) (ExprString string2) = string1 == string2
@@ -330,13 +330,13 @@ instance Eq ExprVal where
     (==) (ExprList pair1) (ExprList pair2)  = pair1 == pair2
 
 instance Ord ExprVal where
-    (>=) (ExprNum num1) (ExprNum num2) = num1 >= num2
-    (>) (ExprNum num1) (ExprNum num2) = num1 > num2
-    (<=) (ExprNum num1) (ExprNum num2) = num1 <= num2
-    (<) (ExprNum num1) (ExprNum num2) = num1 < num2
+    (>=) (ExprDou num1) (ExprDou num2) = num1 >= num2
+    (>) (ExprDou num1) (ExprDou num2) = num1 > num2
+    (<=) (ExprDou num1) (ExprDou num2) = num1 <= num2
+    (<) (ExprDou num1) (ExprDou num2) = num1 < num2
 
-evalNum :: ExprVal -> Num
-evalNum (ExprNum num) = num
+evalDou :: ExprVal -> Double
+evalDou (ExprDou num) = num
 evalBool :: ExprVal -> Bool
 evalBool (ExprBool bool) = bool
 evalChar :: ExprVal -> Char
@@ -355,16 +355,16 @@ eval (Not p) = ExprBool (not . evalBool . eval p)
 eval (And p q) = ExprBool ((evalBool . eval p) && (evalBool . eval q))
 eval (Or p q) = ExprBool ((evalBool . eval p) || (evalBool . eval q))
 eval (Eq p q) = ExprBool ((eval p) == (eval q))
-eval (Lt p q) = ExprBool ((evalNum . eval p) < (evalNum . eval q))
-eval (Le p q) = ExprBool ((evalNum . eval p) <= (evalNum . eval q))
-eval (Gt p q) = ExprBool ((evalNum . eval p) > (evalNum . eval q))
-eval (Ge p q) = ExprBool ((evalNum . eval p) >= (evalNum . eval q))
+eval (Lt p q) = ExprBool ((evalDou . eval p) < (evalDou . eval q))
+eval (Le p q) = ExprBool ((evalDou . eval p) <= (evalDou . eval q))
+eval (Gt p q) = ExprBool ((evalDou . eval p) > (evalDou . eval q))
+eval (Ge p q) = ExprBool ((evalDou . eval p) >= (evalDou . eval q))
 
-eval (Dou p) = ExprNum p
-eval (Add p q) = ExprNum ((evalNum . eval p) + (evalNum . eval q))
-eval (Sub p q) = ExprNum ((evalNum . eval p) - (evalNum . eval q))
-eval (Mul p q) = ExprNum ((evalNum . eval p) * (evalNum . eval q))
-eval (Div p q) = ExprNum ((evalNum . eval p) / (evalNum . eval q))
+eval (Dou p) = ExprDou p
+eval (Add p q) = ExprDou ((evalDou . eval p) + (evalDou . eval q))
+eval (Sub p q) = ExprDou ((evalDou . eval p) - (evalDou . eval q))
+eval (Mul p q) = ExprDou ((evalDou . eval p) * (evalDou . eval q))
+eval (Div p q) = ExprDou ((evalDou . eval p) / (evalDou . eval q))
 
 --eval NilLit = []
 --eval Chr c = c
