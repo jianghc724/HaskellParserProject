@@ -341,8 +341,8 @@ evalString :: ExprVal -> String
 evalString (ExprString string) = string
 evalList :: ExprVal -> [ExprVal]
 evalList (ExprList list) = list
-evalPair :: ExprVal -> (ExprVal, ExprVal)
-evalPair (ExprCons pair) = pair
+evalCons :: ExprVal -> (ExprVal, ExprVal)
+evalCons (ExprCons pair) = pair
 
 eval :: Expr -> ExprVal
 eval FalseLit = ExprBool False
@@ -362,15 +362,13 @@ eval (Sub p q) = ExprDou ((evalDou (eval p)) - (evalDou (eval q)))
 eval (Mul p q) = ExprDou ((evalDou (eval p)) * (evalDou (eval q)))
 eval (Div p q) = ExprDou ((evalDou (eval p)) / (evalDou (eval q)))
 
-eval NilLit = ()
-eval Chr c = c
---eval St s = s
---eval Cons e1 e2
- --   | eval e2 == [] = (eval e1):(eval e2)
---    | head (eval e2) && (type . eval e1) == (type head (eval e2)) = (eval e1):(eval e2)
---    | otherwise (error "temp error")
---eval Car (Cons e1 e2) = eval e1
---eval Cdr (Cons e1 e2) = eval e2
+eval NilLit = ExprCons ()
+eval Ch c = ExprChar c
+eval St s = ExprString s 
+eval Cons e1 e2 = ExprCons (eval e1, eval e2)
+eval Car NilLit = ExprCons ()
+eval Car (Cons e1 e2) = eval e1
+eval Cdr (Cons e1 e2) = eval e2
 
 getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
