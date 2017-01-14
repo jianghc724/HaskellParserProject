@@ -7,9 +7,9 @@ import System.IO
 import Data.Attoparsec.Text
 import Data.Functor
 import Data.Text.Internal
+import Data.Text
 import Text.PrettyPrint
 import Text.PrettyPrint.GenericPretty
-import While
 import Parser
 import PrettyTreePrint
 
@@ -19,17 +19,17 @@ errorhandle env str = env
 
 getWord :: [[Char]] -> [Char]
 getWord x
-    | length x == 1 = head x
-    | otherwise = head x ++ " " ++ getWord (tail x) 
+    | Prelude.length x == 1 = Prelude.head x
+    | otherwise = Prelude.head x ++ " " ++ getWord (Prelude.tail x) 
 
 mainLoop :: Env -> IO ()
 mainLoop env = do
     putStr "> "
     hFlush stdout
     l <- getLine
-    case words l of
+    case Prelude.words l of
         ":i":pro -> do
-            mainLoop (either (errorhandle env) (procStat env) (parseOnly statParser (getWord pro)))
+            mainLoop (either (errorhandle env) (procStat env) (parseOnly statParser (pack (getWord pro))))
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do

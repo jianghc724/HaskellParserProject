@@ -9,6 +9,7 @@ import Data.Functor
 import Text.PrettyPrint
 import Text.PrettyPrint.GenericPretty
 import qualified Data.Map as M
+import Data.Maybe
 
 type Env = M.Map ExprVal ExprVal
 
@@ -94,7 +95,7 @@ whileParser = do
             
 variableParser :: Parser Expr
 variableParser = do
-    xs <- many1 letter
+    xs <- lexeme $ many1 letter
     return (Var xs)
             
 falseParser :: Parser Expr
@@ -250,7 +251,7 @@ stringParser = do
     lexeme $ Data.Attoparsec.Text.char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
     lexeme $ Data.Attoparsec.Text.char '\"'
-    return (St (showText s))
+    return (St (show s))
     
 setParser :: Parser Statement
 setParser = do
@@ -264,7 +265,7 @@ setParser = do
 skipParser :: Parser Statement
 skipParser = do
     lexeme $ string "skip"
-    return Skip
+    return (Skip)
     
 ifParser :: Parser Statement
 ifParser = do
@@ -290,6 +291,7 @@ statlistParser = do
     lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "begin"
     stat <- statParser
+    --lexeme $ Data.Attoparsec.Text.char ')'
     stats <- statsParser
     return (Begin stat stats)
     
@@ -302,7 +304,7 @@ statslistParser = do
 nilParser :: Parser Statements
 nilParser = do
     lexeme $ Data.Attoparsec.Text.char ')'
-    return NilStat
+    return (NilStat)
  
 lexeme :: Parser a -> Parser a
 lexeme p = do
@@ -328,10 +330,18 @@ instance Eq ExprVal where
 
 instance Ord ExprVal where
     (>=) (ExprDou num1) (ExprDou num2) = num1 >= num2
+    (>=) (ExprChar char1) (ExprChar char2) = char1 >= char2
+    (>=) (ExprString string1) (ExprString string2) = string1 >= string2
     (>) (ExprDou num1) (ExprDou num2) = num1 > num2
+    (>) (ExprChar char1) (ExprChar char2) = char1 > char2
+    (>) (ExprString string1) (ExprString string2) = string1 > string2
     (<=) (ExprDou num1) (ExprDou num2) = num1 <= num2
+    (<=) (ExprChar char1) (ExprChar char2) = char1 <= char2
+    (<=) (ExprString string1) (ExprString string2) = string1 <= string2
     (<) (ExprDou num1) (ExprDou num2) = num1 < num2
-
+    (<) (ExprChar char1) (ExprChar char2) = char1 < char2
+    (<) (ExprString string1) (ExprString string2) = string1 < string2
+    
 evalDou :: ExprVal -> Double
 evalDou (ExprDou num) = num
 evalBool :: ExprVal -> Bool
@@ -348,7 +358,7 @@ evalCons (ExprCons pair) = pair
 eval :: Expr -> Env -> ExprVal
 eval FalseLit env = ExprBool False
 eval TrueLit env = ExprBool True
-eval (Var xs) env = if M.member xs env then M.lookup xs env else ExprString xs
+eval (Var xs) env = if M.member (eval (St xs) env) env then fromJust (M.lookup (eval (St xs) env) env) else ExprString xs
 eval (Not p) env = ExprBool (not (evalBool(eval p env)))
 eval (And p q) env = ExprBool ((evalBool (eval p env)) && (evalBool (eval q env)))
 eval (Or p q) env = ExprBool ((evalBool (eval p env)) || (evalBool (eval q env)))
@@ -364,17 +374,25 @@ eval (Sub p q) env = ExprDou ((evalDou (eval p env)) - (evalDou (eval q env)))
 eval (Mul p q) env = ExprDou ((evalDou (eval p env)) * (evalDou (eval q env)))
 eval (Div p q) env = ExprDou ((evalDou (eval p env)) / (evalDou (eval q env)))
 
-eval NilLit = ExprCons ()
-eval Ch c = ExprChar c
-eval St s = ExprString s 
-eval Cons e1 e2 = ExprCons (eval e1, eval e2)
-eval Car NilLit = ExprCons ()
-eval Car (Cons e1 e2) = eval e1
-eval Cdr (Cons e1 e2) = eval e2
+--eval NilLit env = ExprCons ()
+eval (Ch c) env = ExprChar c
+eval (St s) env = ExprString s 
+eval (Cons e1 e2) env = ExprCons (eval e1 env, eval e2 env)
+--eval (Car NilLit) env = ExprCons ()
+eval (Car (Cons e1 e2)) env = eval e1 env
+eval (Cdr (Cons e1 e2)) env = eval e2 env
 
-getExpr :: Either String Expr -> String
-getExpr (Left errStr) =  "not a valid expr: " ++ errStr
-getExpr (Right expr) = show $ eval expr
+getExpr :: Either String Expr -> Env -> String
+getExpr (Left errStr) env =  "not a valid expr: " ++ errStr
+getExpr (Right expr) env = show (eval expr env)
+
+getStat :: Either String Statement -> Statement
+getStat (Left errStr) = Skip
+getStat (Right stat) = stat
+
+getPro :: Either String Program -> Program
+getPro (Left errStr) = Pro Skip
+getPro (Right pro) = pro
 
 genExprTree :: Expr -> Tree String
 genExprTree FalseLit = Node "False" Nil Nil Nil
@@ -411,22 +429,29 @@ genProTree (Pro p) = Node "program" (genStatTree p) Nil Nil
 procStat :: Env -> Statement -> Env
 procStat env (Begin p q) = (procStats (procStat env p) q)
 procStat env (Skip) = env
-procStat env (Set var p) = (M.insert (eval var env) (eval p env) env)
+procStat env (Set (Var xs) p) = (M.insert (eval (St xs) env) (eval p env) env)
 procStat env (If expr p q) = if evalBool (eval expr env) then (procStat env p) else (procStat env q)
-procStat env (While expr p) = if evalBool (eval expr env) then (procStat env p) else env
+procStat env (While expr p) = if evalBool (eval expr env) then (procStat (procStat env p) (While expr p)) else env
     
 procStats :: Env -> Statements -> Env
 procStats env (NilStat) = env
 procStats env (List p q) = (procStats (procStat env p) q)
 
+procPro :: Env -> Program -> Env
+procPro env (Pro p) = procStat env p
+
 defMain :: IO ()
 defMain = do
-    putStrLn $ getExpr $ parseOnly notParser "(not True)"
-    putStrLn $ getExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
-    putStrLn $ getExpr $ parseOnly mulParser "(* 2 2.2 )" 
-    putStrLn $ getExpr $ parseOnly divParser "(/ 10 2 )" 
-    putStrLn $ show $ parseOnly exprParser "12.3"
-    putStrLn $ getExpr $ parseOnly charParser "\'a\'" 
-    putStrLn $ getExpr $ parseOnly stringParser "\"abc\""
-    putStrLn $ getExpr $ parseOnly consParser "(cons \'a\' \'b\')"
-    putStrLn "-------"
+    
+    --putStrLn $ getExpr (parseOnly notParser "(not True)") env
+    --putStrLn $ getExpr (parseOnly addParser "(+ 1.2 2.2 )") env 
+    --putStrLn $ getExpr (parseOnly mulParser "(* 2 2.2 )") env
+    --putStrLn $ getExpr (parseOnly divParser "(/ 10 2 )") env
+    --putStrLn $ show $ parseOnly exprParser "12.3"
+    --putStrLn $ getExpr (parseOnly charParser "\'a\'" ) env
+    --putStrLn $ getExpr (parseOnly stringParser "\"abc\"") env
+    --putStrLn $ getExpr (parseOnly consParser "(cons \'a\' \'b\')") env
+    --putStrLn "-------"
+    --putStrLn $ getStat (parseOnly setParser "(set! a 1)")
+    let env = procPro M.empty (getPro (parseOnly whileParser "(begin (set! a 3) (if (< a 2) (set! b 1) (set! b 2)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
+    --putStrLn (evalString (fromJust (M.lookup (eval (St "a") M.empty) env)))
