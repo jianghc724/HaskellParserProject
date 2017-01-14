@@ -25,8 +25,8 @@ data Expr
     | Cons Expr Expr
     | Car Expr
     | Cdr Expr
-    | Char CharLit
-    | Str StringLit
+    | Chr Char
+    | St String
     | Int Integer
     | Dou Double
     deriving Show
@@ -83,7 +83,8 @@ whileParser = do
     return (Pro stat)
             
 variableParser :: Parser Expr
-variableParser = lexeme $ string "a" $> VarLit
+variableParser = do
+    lexeme $ string "a" $> VarLit
             
 falseParser :: Parser Expr
 falseParser = lexeme $ string "False" $> FalseLit
@@ -231,14 +232,14 @@ charParser = do
     lexeme $ char '\'' 
     c <- anyChar
     lexeme $ char '\''
-    return (Char c)
+    return (Chr c)
 
 stringParser :: Parser Expr
 stringParser = do
     lexeme $ char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
     lexeme $ char '\"'
-    return (String s)
+    return (St s)
     
 setParser :: Parser Statement
 setParser = do
@@ -297,7 +298,15 @@ lexeme p = do
     skipSpace
     p
 
-data ExprVal = Num | Bool | [a] 
+data ExprVal = Num | Bool | Char | ]String | [ExprVal]
+    deriving show
+instance Eq ExprVal where
+    Num == Num = True
+    Bool == Bool = True
+    Char == Char = True
+    [ExprVal] == [ExprVal] = True
+    [Char] == String = True
+    _ ==_ = False
 
 eval :: Expr -> ExprVal
 eval FalseLit = False
@@ -318,9 +327,12 @@ eval (Mul p q) = (douEval p) * (douEval q)
 eval (Div p q) = (douEval p) / (douEval q)
 
 eval NilLit = []
-eval Char c = c:[]
-eval String s = s::[Char]
-eval Cons e1 e2 = (eval e1) ++ (eval e2)
+eval Chr c = c
+eval St s = s
+eval Cons e1 e2
+    | e2 == [] = e1:e2
+    | e2 == x:xs && (type e1) == (type x) = e1:e2
+    | otherwise (error "temp error")
 eval Car (Cons e1 e2) = eval e1
 eval Cdr (Cons e1 e2) = eval e2
 
