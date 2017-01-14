@@ -1,9 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Parser where
 
 import Control.Applicative
 import Data.Attoparsec.Text
 import Data.Functor
+import Text.PrettyPrint
+import Text.PrettyPrint.GenericPretty
+
+data Tree a = Nil | Node a (Tree a) (Tree a) (Tree a)
+    deriving (Show, Generic, Out)
 
 data Expr
     = FalseLit
@@ -40,12 +47,19 @@ data Statement
     deriving Show
 
 data Statements
-    = Nil
+    = NilStat
     | List Statement Statements
     deriving Show
     
 data Program
     = Pro Statement
+    deriving Show
+
+data AllExpr
+    = Program
+    | Statements
+    | Statement
+    | Expr
     deriving Show
 
 --data Number = Integer
@@ -66,7 +80,7 @@ intParser = do
 
 douParser :: Parser Expr
 douParser = do 
-    d <- lexeme $ double 
+    d <- lexeme $ Data.Attoparsec.Text.double 
     return (Dou d) 
 
             
@@ -94,109 +108,109 @@ trueParser = lexeme $ string "True" $> TrueLit
 
 notParser :: Parser Expr
 notParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "not"
     expr <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Not expr)
     
 andParser :: Parser Expr
 andParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "and"
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (And expr1 expr2)
     
 orParser :: Parser Expr
 orParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "or"
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Or expr1 expr2)
     
 addParser :: Parser Expr
 addParser = do
-    lexeme $ char '('
-    lexeme $ char '+'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '+'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Add expr1 expr2)
 
 subParser :: Parser Expr
 subParser = do
-    lexeme $ char '('
-    lexeme $ char '-'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '-'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Sub expr1 expr2)
 
 mulParser :: Parser Expr
 mulParser = do
-    lexeme $ char '('
-    lexeme $ char '*'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '*'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Mul expr1 expr2)
 
 divParser :: Parser Expr
 divParser = do
-    lexeme $ char '('
-    lexeme $ char '/'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '/'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Div expr1 expr2)
 
 eqlParser :: Parser Expr
 eqlParser = do
-    lexeme $ char '('
-    lexeme $ char '='
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '='
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Eq expr1 expr2)
 
 lesParser :: Parser Expr
 lesParser = do
-    lexeme $ char '('
-    lexeme $ char '<'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '<'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Lt expr1 expr2)
 
 leqParser :: Parser Expr
 leqParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "<="
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Le expr1 expr2)
 
 morParser :: Parser Expr
 morParser = do
-    lexeme $ char '('
-    lexeme $ char '>'
+    lexeme $ Data.Attoparsec.Text.char '('
+    lexeme $ Data.Attoparsec.Text.char '>'
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Gt expr1 expr2) 
 
 mqlParser :: Parser Expr
 mqlParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string ">="
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Ge expr1 expr2)
 
 nilListParser :: Parser Expr
@@ -204,50 +218,50 @@ nilListParser = lexeme $ string "nil" $> NilLit
 
 consParser :: Parser Expr
 consParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "cons"
     expr1 <- exprParser
     expr2 <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Cons expr1 expr2)
 
 carParser :: Parser Expr
 carParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "car"
     expr <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Car expr)
     
 cdrParser :: Parser Expr
 cdrParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "cdr"
     expr <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Cdr expr)
 
 charParser :: Parser Expr
 charParser = do
-    lexeme $ char '\'' 
+    lexeme $ Data.Attoparsec.Text.char '\'' 
     c <- anyChar
-    lexeme $ char '\''
+    lexeme $ Data.Attoparsec.Text.char '\''
     return (Chr c)
 
 stringParser :: Parser Expr
 stringParser = do
-    lexeme $ char '\"'
+    lexeme $ Data.Attoparsec.Text.char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
-    lexeme $ char '\"'
+    lexeme $ Data.Attoparsec.Text.char '\"'
     return (St s)
     
 setParser :: Parser Statement
 setParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "set!"
     var <- variableParser
     expr <- exprParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (Set var expr)
     
 skipParser :: Parser Statement
@@ -257,26 +271,26 @@ skipParser = do
     
 ifParser :: Parser Statement
 ifParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "if"
     expr <- exprParser
     stat1 <- statParser
     stat2 <- statParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (If expr stat1 stat2)
     
 whilestatParser :: Parser Statement
 whilestatParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "while"
     expr <- exprParser
     stat <- statParser
-    lexeme $ char ')'
+    lexeme $ Data.Attoparsec.Text.char ')'
     return (While expr stat)
     
 statlistParser :: Parser Statement
 statlistParser = do
-    lexeme $ char '('
+    lexeme $ Data.Attoparsec.Text.char '('
     lexeme $ string "begin"
     stat <- statParser
     stats <- statsParser
@@ -290,8 +304,8 @@ statslistParser = do
     
 nilParser :: Parser Statements
 nilParser = do
-    lexeme $ char ')'
-    return Nil
+    lexeme $ Data.Attoparsec.Text.char ')'
+    return NilStat
  
 lexeme :: Parser a -> Parser a
 lexeme p = do
@@ -366,6 +380,32 @@ getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
 getExpr (Right expr) = show $ eval expr
 
+genTree :: AllExpr -> Tree String
+genTree FalseLit = Node "False" Nil Nil Nil
+genTree TrueLit = Node "True" Nil Nil Nil
+genTree (Not p) = Node "not" (genTree p) Nil Nil
+genTree (And p q) = Node "and" (genTree p) (genTree q) Nil
+genTree (Or p q) = Node "or" (genTree p) (genTree q) Nil
+genTree (Add p q) = Node "+" (genTree p) (genTree q) Nil
+genTree (Sub p q) = Node "-" (genTree p) (genTree q) Nil
+genTree (Mul p q) = Node "*" (genTree p) (genTree q) Nil
+genTree (Div p q) = Node "/" (genTree p) (genTree q) Nil
+genTree (Eq p q) = Node "==" (genTree p) (genTree q) Nil
+genTree (Lt p q) = Node "<" (genTree p) (genTree q) Nil
+genTree (Le p q) = Node "<=" (genTree p) (genTree q) Nil
+genTree (Gt p q) = Node ">" (genTree p) (genTree q) Nil
+genTree (Ge p q) = Node ">=" (genTree p) (genTree q) Nil
+genTree (Int p) = Node (show p) Nil Nil Nil
+genTree (Dou p) = Node (show p) Nil Nil Nil
+genTree (Begin p q) = Node "begin" (genTree p) (genTree q) Nil
+genTree Skip = Node "skip" Nil Nil Nil
+genTree (Set p q) = Node "set" (genTree p) (genTree q) Nil
+genTree (If p q r) = Node "if" (genTree p) (genTree q) (genTree r)
+genTree (While p q) = Node "while" (genTree p) (genTree q) Nil
+genTree NilStat = Node "nil" Nil Nil Nil
+genTree (List p q) = Node "statement_list" (genTree p) (genTree q) Nil
+genTree (Pro p) = Node "program" (genTree p) Nil Nil
+
 defMain :: IO ()
 defMain = do
     putStrLn $ getExpr $ parseOnly notParser "(not True)"
@@ -377,8 +417,3 @@ defMain = do
     putStrLn $ getExpr $ parseOnly stringParser "\"abc\""
     putStrLn $ getExpr $ parseOnly consParser "(cons \'a\' \'b\')"
     putStrLn "-------"
-
-
-
-
-
