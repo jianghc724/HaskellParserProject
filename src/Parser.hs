@@ -18,7 +18,7 @@ data Tree a = Nil | Node a (Tree a) (Tree a) (Tree a)
 data Expr
     = FalseLit
     | TrueLit
-    | VarLit
+    | Var String
     | Not Expr
     | And Expr Expr
     | Or Expr Expr
@@ -94,7 +94,8 @@ whileParser = do
             
 variableParser :: Parser Expr
 variableParser = do
-    lexeme $ string "a" $> VarLit
+    xs <- many1 letter
+    return (Var xs)
             
 falseParser :: Parser Expr
 falseParser = lexeme $ string "False" $> FalseLit
@@ -344,23 +345,24 @@ evalList (ExprList list) = list
 evalPair :: ExprVal -> (ExprVal, ExprVal)
 evalPair (ExprList pair) = pair
 
-eval :: Expr -> ExprVal
-eval FalseLit = ExprBool False
-eval TrueLit = ExprBool True
-eval (Not p) = ExprBool (not (evalBool(eval p)))
-eval (And p q) = ExprBool ((evalBool (eval p)) && (evalBool (eval q)))
-eval (Or p q) = ExprBool ((evalBool (eval p)) || (evalBool (eval q)))
-eval (Eq p q) = ExprBool ((eval p) == (eval q))
-eval (Lt p q) = ExprBool ((evalDou (eval p)) < (evalDou (eval q)))
-eval (Le p q) = ExprBool ((evalDou (eval p)) <= (evalDou (eval q)))
-eval (Gt p q) = ExprBool ((evalDou (eval p)) > (evalDou (eval q)))
-eval (Ge p q) = ExprBool ((evalDou (eval p)) >= (evalDou (eval q)))
+eval :: Expr -> Env -> ExprVal
+eval FalseLit env = ExprBool False
+eval TrueLit env = ExprBool True
+eval (Var xs) env = if M.member xs env then M.lookup xs env else ExprString xs
+eval (Not p) env = ExprBool (not (evalBool(eval p env)))
+eval (And p q) env = ExprBool ((evalBool (eval p env)) && (evalBool (eval q env)))
+eval (Or p q) env = ExprBool ((evalBool (eval p env)) || (evalBool (eval q env)))
+eval (Eq p q) env = ExprBool ((eval p env) == (eval q env))
+eval (Lt p q) env = ExprBool ((evalDou (eval p env)) < (evalDou (eval q env)))
+eval (Le p q) env = ExprBool ((evalDou (eval p env)) <= (evalDou (eval q env)))
+eval (Gt p q) env = ExprBool ((evalDou (eval p env)) > (evalDou (eval q env)))
+eval (Ge p q) env = ExprBool ((evalDou (eval p env)) >= (evalDou (eval q env)))
 
-eval (Dou p) = ExprDou p
-eval (Add p q) = ExprDou ((evalDou (eval p)) + (evalDou (eval q)))
-eval (Sub p q) = ExprDou ((evalDou (eval p)) - (evalDou (eval q)))
-eval (Mul p q) = ExprDou ((evalDou (eval p)) * (evalDou (eval q)))
-eval (Div p q) = ExprDou ((evalDou (eval p)) / (evalDou (eval q)))
+eval (Dou p) env = ExprDou p
+eval (Add p q) env = ExprDou ((evalDou (eval p env)) + (evalDou (eval q env)))
+eval (Sub p q) env = ExprDou ((evalDou (eval p env)) - (evalDou (eval q env)))
+eval (Mul p q) env = ExprDou ((evalDou (eval p env)) * (evalDou (eval q env)))
+eval (Div p q) env = ExprDou ((evalDou (eval p env)) / (evalDou (eval q env)))
 
 --eval NilLit = []
 --eval Chr c = c
@@ -411,9 +413,9 @@ genProTree (Pro p) = Node "program" (genStatTree p) Nil Nil
 procStat :: Env -> Statement -> Env
 procStat env (Begin p q) = (procStats (procStat env p) q)
 procStat env (Skip) = env
-procStat env (Set var p) = (M.insert (eval var) (eval p) env)
-procStat env (If expr p q) = if evalBool (eval expr) then (procStat env p) else (procStat env q)
-procStat env (While expr p) = if evalBool (eval expr) then (procStat env p) else env
+procStat env (Set var p) = (M.insert (eval var env) (eval p env) env)
+procStat env (If expr p q) = if evalBool (eval expr env) then (procStat env p) else (procStat env q)
+procStat env (While expr p) = if evalBool (eval expr env) then (procStat env p) else env
     
 procStats :: Env -> Statements -> Env
 procStats env (NilStat) = env
