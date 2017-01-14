@@ -1,7 +1,6 @@
 module While where
 
 import Parser
-import Boolean
 --import Calculate
 import qualified Data.Map as M
 

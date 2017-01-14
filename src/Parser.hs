@@ -54,7 +54,7 @@ data Program
 
 exprParser :: Parser Expr
 
-exprParser = falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
+exprParser = nilListParser <|> charParser <|> stringParser <|> consParser <|> carParser <|> cdrParser<|> falseParser <|> trueParser <|> notParser <|> andParser <|> orParser
             <|> addParser <|> subParser <|> mulParser <|> divParser <|> eqlParser 
             <|> lesParser <|> leqParser <|> morParser <|> mqlParser <|> douParser <|> intParser
             <|> variableParser
@@ -297,7 +297,9 @@ lexeme p = do
     skipSpace
     p
 
-eval :: Expr -> Bool
+data ExprVal = Num | Bool | [a] 
+
+eval :: Expr -> ExprVal
 eval FalseLit = False
 eval TrueLit = True
 eval (Not p) = not $ eval p
@@ -309,24 +311,37 @@ eval (Le p q) = (douEval p) <= (douEval q)
 eval (Gt p q) = (douEval p) > (douEval q)
 eval (Ge p q) = (douEval p) >= (douEval q)
 
-douEval :: Expr -> Double
-douEval (Dou p) = p
-douEval (Add p q) = (douEval p) + (douEval q)
-douEval (Sub p q) = (douEval p) - (douEval q)
-douEval (Mul p q) = (douEval p) * (douEval q)
-douEval (Div p q) = (douEval p) / (douEval q)
+eval (Dou p) = p
+eval (Add p q) = (douEval p) + (douEval q)
+eval (Sub p q) = (douEval p) - (douEval q)
+eval (Mul p q) = (douEval p) * (douEval q)
+eval (Div p q) = (douEval p) / (douEval q)
 
-getDoubleExpr :: Either String Expr -> String
-getDoubleExpr (Left errStr) =  "not a valid add expr: " ++ errStr
-getDoubleExpr (Right expr) = show $ douEval expr
+eval NilLit = []
+eval Char c = c:[]
+eval String s = s::[Char]
+eval Cons e1 e2 = (eval e1) ++ (eval e2)
+eval Car (Cons e1 e2) = eval e1
+eval Cdr (Cons e1 e2) = eval e2
+
+eval (Not p) = not $ eval p
+eval (And p q) = (eval p) && (eval q) 
+eval (Or p q) = (eval p) || (eval q)
+
+getExpr :: Either String Expr -> String
+getExpr (Left errStr) =  "not a valid expr: " ++ errStr
+getExpr (Right expr) = show $ eval expr
 
 defMain :: IO ()
 defMain = do
     putStrLn $ show $ parseOnly notParser "(not True)"
-    putStrLn $ getDoubleExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
-    putStrLn $ getDoubleExpr $ parseOnly mulParser "(* 2 2.2 )" 
-    putStrLn $ getDoubleExpr $ parseOnly divParser "(/ 10 2 )" 
+    putStrLn $ getExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
+    putStrLn $ getExpr $ parseOnly mulParser "(* 2 2.2 )" 
+    putStrLn $ getExpr $ parseOnly divParser "(/ 10 2 )" 
     putStrLn $ show $ parseOnly exprParser "12.3"
+    putStrLn $ getExpr $ parseOnly charParser "\'a\'" 
+    putStrLn $ getExpr $ parseOnly stringParser "\"abc\""
+    putStrLn $ getExpr $ parseOnly consParser "(cons \'a\' \'b\')"
     putStrLn "-------"
 
 
