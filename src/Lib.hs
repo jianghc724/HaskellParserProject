@@ -2,6 +2,7 @@ module Lib where
 
 import Boolean
 import REPL
+import FileIO
 import qualified Data.Map as M
 
 import Control.Applicative
@@ -55,9 +56,14 @@ parseOption = p0 <|> p1 where
         i <- parseInPath
         return (Option i o)
 
---defMain :: IO ()
---defMain = do
---    args <- getArgs
---    print $ runStateT parseOption args
---    putStrLn "This is a simple REPL. Be my guest!"
---    mainLoop (M.empty)
+defMain :: IO ()
+defMain = do
+    args <- getArgs
+    print args
+    print parseOption args
+    print $ runStateT parseOption args
+    putStrLn "This is a simple REPL. Be my guest!"
+    --mainLoop (M.empty)
+
+
+
