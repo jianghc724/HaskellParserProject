@@ -312,47 +312,69 @@ lexeme p = do
     skipSpace
     p
 
-data ExprVal = Num | Bool | Char | String | [ExprVal]
-    deriving show
+data ExprVal = ExprNum Num | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal)
+instance Show ExprVal where
+    show ExprNum num = show num
+    show ExprBool bool = show bool
+    show ExprChar char = show char
+    show ExprString string = show string
+    show ExprList list = show list
+    show ExprCons pair = show pair
+
 instance Eq ExprVal where
-    Num == Num = True
-    Bool == Bool = True
-    Char == Char = True
-    [ExprVal] == [ExprVal] = True
-    [Char] == String = True
-    _ ==_ = False
+    (==) (ExprNum num1) (ExprNum num2) = num1 == num2
+    (==) (ExprBool bool1) (ExprBool bool2) = bool1 == bool2
+    (==) (ExprChar char1) (ExprChar char2) = char1 == char2
+    (==) (ExprString string1) (ExprString string2) = string1 == string2
+    (==) (ExprList list1) (ExprList list2)  = list1 == list2
+    (==) (ExprList pair1) (ExprList pair2)  = pair1 == pair2
+
+instance Ord ExprVal where
+    (>=) (ExprNum num1) (ExprNum num2) = num1 >= num2
+    (>) (ExprNum num1) (ExprNum num2) = num1 > num2
+    (<=) (ExprNum num1) (ExprNum num2) = num1 <= num2
+    (<) (ExprNum num1) (ExprNum num2) = num1 < num2
+
+evalNum :: ExprVal -> Num
+evalNum (ExprNum num) = num
+evalBool :: ExprVal -> Bool
+evalBool (ExprBool bool) = bool
+evalChar :: ExprVal -> Char
+evalChar (ExprChar char) = char
+evalString :: ExprVal -> String
+evalString (ExprString string) = string
+evalList :: ExprVal -> [ExprVal]
+evalList (ExprList list) = list
+evalPair :: ExprVal -> (ExprVal, ExprVal)
+evalPair (ExprList pair) = pair
 
 eval :: Expr -> ExprVal
-eval FalseLit = False
-eval TrueLit = True
-eval (Not p) = not $ eval p
-eval (And p q) = (eval p) && (eval q) 
-eval (Or p q) = (eval p) || (eval q)
-eval (Eq p q) = (douEval p) == (douEval q)
-eval (Lt p q) = (douEval p) < (douEval q)
-eval (Le p q) = (douEval p) <= (douEval q)
-eval (Gt p q) = (douEval p) > (douEval q)
-eval (Ge p q) = (douEval p) >= (douEval q)
+eval FalseLit = ExprBool False
+eval TrueLit = ExprBool True
+eval (Not p) = ExprBool (not . evalBool . eval p)
+eval (And p q) = ExprBool ((evalBool . eval p) && (evalBool . eval q))
+eval (Or p q) = ExprBool ((evalBool . eval p) || (evalBool . eval q))
+eval (Eq p q) = ExprBool ((eval p) == (eval q))
+eval (Lt p q) = ExprBool ((evalNum . eval p) < (evalNum . eval q))
+eval (Le p q) = ExprBool ((evalNum . eval p) <= (evalNum . eval q))
+eval (Gt p q) = ExprBool ((evalNum . eval p) > (evalNum . eval q))
+eval (Ge p q) = ExprBool ((evalNum . eval p) >= (evalNum . eval q))
 
-eval (Dou p) = p
-eval (Add p q) = (douEval p) + (douEval q)
-eval (Sub p q) = (douEval p) - (douEval q)
-eval (Mul p q) = (douEval p) * (douEval q)
-eval (Div p q) = (douEval p) / (douEval q)
+eval (Dou p) = ExprNum p
+eval (Add p q) = ExprNum ((evalNum . eval p) + (evalNum . eval q))
+eval (Sub p q) = ExprNum ((evalNum . eval p) - (evalNum . eval q))
+eval (Mul p q) = ExprNum ((evalNum . eval p) * (evalNum . eval q))
+eval (Div p q) = ExprNum ((evalNum . eval p) / (evalNum . eval q))
 
-eval NilLit = []
-eval Chr c = c
-eval St s = s
-eval Cons e1 e2
-    | e2 == [] = e1:e2
-    | e2 == x:xs && (type e1) == (type x) = e1:e2
-    | otherwise (error "temp error")
-eval Car (Cons e1 e2) = eval e1
-eval Cdr (Cons e1 e2) = eval e2
-
-eval (Not p) = not $ eval p
-eval (And p q) = (eval p) && (eval q) 
-eval (Or p q) = (eval p) || (eval q)
+--eval NilLit = []
+--eval Chr c = c
+--eval St s = s
+--eval Cons e1 e2
+ --   | eval e2 == [] = (eval e1):(eval e2)
+--    | head (eval e2) && (type . eval e1) == (type head (eval e2)) = (eval e1):(eval e2)
+--    | otherwise (error "temp error")
+--eval Car (Cons e1 e2) = eval e1
+--eval Cdr (Cons e1 e2) = eval e2
 
 getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
@@ -386,7 +408,7 @@ genTree (Pro p) = Node "program" (genTree p) Nil Nil
 
 defMain :: IO ()
 defMain = do
-    putStrLn $ show $ parseOnly notParser "(not True)"
+    putStrLn $ getExpr $ parseOnly notParser "(not True)"
     putStrLn $ getExpr $ parseOnly addParser "(+ 1.2 2.2 )" 
     putStrLn $ getExpr $ parseOnly mulParser "(* 2 2.2 )" 
     putStrLn $ getExpr $ parseOnly divParser "(/ 10 2 )" 
