@@ -373,13 +373,16 @@ eval (Add p q) env = ExprDou ((evalDou (eval p env)) + (evalDou (eval q env)))
 eval (Sub p q) env = ExprDou ((evalDou (eval p env)) - (evalDou (eval q env)))
 eval (Mul p q) env = ExprDou ((evalDou (eval p env)) * (evalDou (eval q env)))
 eval (Div p q) env = ExprDou ((evalDou (eval p env)) / (evalDou (eval q env)))
-
---eval NilLit env = ExprCons ()
+--eval NilLit env = ExprCons ()::(ExprVal, ExprVal)
 eval (Ch c) env = ExprChar c
-eval (St s) env = ExprString s 
-eval (Cons e1 e2) env = ExprCons (eval e1 env, eval e2 env)
---eval (Car NilLit) env = ExprCons ()
+eval (St s) env = ExprString s
+eval (Cons (Dou d) NilLit) env = eval (Dou d) env
+eval (Cons FalseLit NilLit) env = eval FalseLit env
+eval (Cons TrueLit NilLit) env = eval TrueLit env
+eval (Cons e1 e2) env = ExprCons ((eval e1 env), (eval e2 env))
+--eval (Car NilLit) env = ExprCons ()::(ExprVal, ExprVal)
 eval (Car (Cons e1 e2)) env = eval e1 env
+--eval (Cdr NilLit) env = ExprCons ()::(ExprVal, ExprVal)
 eval (Cdr (Cons e1 e2)) env = eval e2 env
 
 getExpr :: Either String Expr -> Env -> String
@@ -397,6 +400,17 @@ getPro (Right pro) = pro
 genExprTree :: Expr -> Tree String
 genExprTree FalseLit = Node "False" Nil Nil Nil
 genExprTree TrueLit = Node "True" Nil Nil Nil
+genExprTree NilLit = Node "()" Nil Nil Nil
+genExprTree (St s) = Node s Nil Nil Nil
+genExprTree (Ch c) = Node (c:[]) Nil Nil Nil
+genExprTree (Cons (Dou d) NilLit) = genExprTree (Dou d)
+genExprTree (Cons FalseLit NilLit) = genExprTree FalseLit
+genExprTree (Cons TrueLit NilLit) = genExprTree TrueLit
+genExprTree (Cons e1 e2) = Node "cons" (genExprTree e1) (genExprTree e2) Nil
+genExprTree (Car NilLit) = Node "()" Nil Nil Nil
+genExprTree (Car (Cons e1 e2)) = genExprTree e1
+genExprTree (Car NilLit) = Node "()" Nil Nil Nil
+genExprTree (Cdr (Cons e1 e2)) = genExprTree e2
 genExprTree (Not p) = Node "not" (genExprTree p) Nil Nil
 genExprTree (And p q) = Node "and" (genExprTree p) (genExprTree q) Nil
 genExprTree (Or p q) = Node "or" (genExprTree p) (genExprTree q) Nil
