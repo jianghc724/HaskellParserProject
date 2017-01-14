@@ -312,7 +312,7 @@ lexeme p = do
     skipSpace
     p
 
-data ExprVal = Num | Bool | Char | ]String | [ExprVal]
+data ExprVal = Num | Bool | Char | String | [ExprVal]
     deriving show
 instance Eq ExprVal where
     Num == Num = True
