@@ -8,6 +8,9 @@ import Data.Attoparsec.Text
 import Data.Functor
 import Text.PrettyPrint
 import Text.PrettyPrint.GenericPretty
+import qualified Data.Map as M
+
+type Env = M.Map ExprVal ExprVal
 
 data Tree a = Nil | Node a (Tree a) (Tree a) (Tree a)
     deriving (Show, Generic, Out)
@@ -32,7 +35,7 @@ data Expr
     | Cons Expr Expr
     | Car Expr
     | Cdr Expr
-    | Chr Char
+    | Ch Char
     | St String
     | Int Integer
     | Dou Double
@@ -53,13 +56,6 @@ data Statements
     
 data Program
     = Pro Statement
-    deriving Show
-
-data AllExpr
-    = Program
-    | Statements
-    | Statement
-    | Expr
     deriving Show
 
 --data Number = Integer
@@ -246,7 +242,7 @@ charParser = do
     lexeme $ Data.Attoparsec.Text.char '\'' 
     c <- anyChar
     lexeme $ Data.Attoparsec.Text.char '\''
-    return (Chr c)
+    return (Ch c)
 
 stringParser :: Parser Expr
 stringParser = do
@@ -314,12 +310,12 @@ lexeme p = do
 
 data ExprVal = ExprDou Double | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal)
 instance Show ExprVal where
-    show ExprDou num = show num
-    show ExprBool bool = show bool
-    show ExprChar char = show char
-    show ExprString string = show string
-    show ExprList list = show list
-    show ExprCons pair = show pair
+    show (ExprDou num) = show num
+    show (ExprBool bool) = show bool
+    show (ExprChar char) = show char
+    show (ExprString string) = show string
+    show (ExprList list) = show list
+    show (ExprCons pair) = show pair
 
 instance Eq ExprVal where
     (==) (ExprDou num1) (ExprDou num2) = num1 == num2
@@ -351,20 +347,20 @@ evalPair (ExprCons pair) = pair
 eval :: Expr -> ExprVal
 eval FalseLit = ExprBool False
 eval TrueLit = ExprBool True
-eval (Not p) = ExprBool (not . evalBool . eval p)
-eval (And p q) = ExprBool ((evalBool . eval p) && (evalBool . eval q))
-eval (Or p q) = ExprBool ((evalBool . eval p) || (evalBool . eval q))
+eval (Not p) = ExprBool (not (evalBool(eval p)))
+eval (And p q) = ExprBool ((evalBool (eval p)) && (evalBool (eval q)))
+eval (Or p q) = ExprBool ((evalBool (eval p)) || (evalBool (eval q)))
 eval (Eq p q) = ExprBool ((eval p) == (eval q))
-eval (Lt p q) = ExprBool ((evalDou . eval p) < (evalDou . eval q))
-eval (Le p q) = ExprBool ((evalDou . eval p) <= (evalDou . eval q))
-eval (Gt p q) = ExprBool ((evalDou . eval p) > (evalDou . eval q))
-eval (Ge p q) = ExprBool ((evalDou . eval p) >= (evalDou . eval q))
+eval (Lt p q) = ExprBool ((evalDou (eval p)) < (evalDou (eval q)))
+eval (Le p q) = ExprBool ((evalDou (eval p)) <= (evalDou (eval q)))
+eval (Gt p q) = ExprBool ((evalDou (eval p)) > (evalDou (eval q)))
+eval (Ge p q) = ExprBool ((evalDou (eval p)) >= (evalDou (eval q)))
 
 eval (Dou p) = ExprDou p
-eval (Add p q) = ExprDou ((evalDou . eval p) + (evalDou . eval q))
-eval (Sub p q) = ExprDou ((evalDou . eval p) - (evalDou . eval q))
-eval (Mul p q) = ExprDou ((evalDou . eval p) * (evalDou . eval q))
-eval (Div p q) = ExprDou ((evalDou . eval p) / (evalDou . eval q))
+eval (Add p q) = ExprDou ((evalDou (eval p)) + (evalDou (eval q)))
+eval (Sub p q) = ExprDou ((evalDou (eval p)) - (evalDou (eval q)))
+eval (Mul p q) = ExprDou ((evalDou (eval p)) * (evalDou (eval q)))
+eval (Div p q) = ExprDou ((evalDou (eval p)) / (evalDou (eval q)))
 
 eval NilLit = ()
 eval Chr c = c
@@ -380,31 +376,48 @@ getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
 getExpr (Right expr) = show $ eval expr
 
-genTree :: AllExpr -> Tree String
-genTree FalseLit = Node "False" Nil Nil Nil
-genTree TrueLit = Node "True" Nil Nil Nil
-genTree (Not p) = Node "not" (genTree p) Nil Nil
-genTree (And p q) = Node "and" (genTree p) (genTree q) Nil
-genTree (Or p q) = Node "or" (genTree p) (genTree q) Nil
-genTree (Add p q) = Node "+" (genTree p) (genTree q) Nil
-genTree (Sub p q) = Node "-" (genTree p) (genTree q) Nil
-genTree (Mul p q) = Node "*" (genTree p) (genTree q) Nil
-genTree (Div p q) = Node "/" (genTree p) (genTree q) Nil
-genTree (Eq p q) = Node "==" (genTree p) (genTree q) Nil
-genTree (Lt p q) = Node "<" (genTree p) (genTree q) Nil
-genTree (Le p q) = Node "<=" (genTree p) (genTree q) Nil
-genTree (Gt p q) = Node ">" (genTree p) (genTree q) Nil
-genTree (Ge p q) = Node ">=" (genTree p) (genTree q) Nil
-genTree (Int p) = Node (show p) Nil Nil Nil
-genTree (Dou p) = Node (show p) Nil Nil Nil
-genTree (Begin p q) = Node "begin" (genTree p) (genTree q) Nil
-genTree Skip = Node "skip" Nil Nil Nil
-genTree (Set p q) = Node "set" (genTree p) (genTree q) Nil
-genTree (If p q r) = Node "if" (genTree p) (genTree q) (genTree r)
-genTree (While p q) = Node "while" (genTree p) (genTree q) Nil
-genTree NilStat = Node "nil" Nil Nil Nil
-genTree (List p q) = Node "statement_list" (genTree p) (genTree q) Nil
-genTree (Pro p) = Node "program" (genTree p) Nil Nil
+genExprTree :: Expr -> Tree String
+genExprTree FalseLit = Node "False" Nil Nil Nil
+genExprTree TrueLit = Node "True" Nil Nil Nil
+genExprTree (Not p) = Node "not" (genExprTree p) Nil Nil
+genExprTree (And p q) = Node "and" (genExprTree p) (genExprTree q) Nil
+genExprTree (Or p q) = Node "or" (genExprTree p) (genExprTree q) Nil
+genExprTree (Add p q) = Node "+" (genExprTree p) (genExprTree q) Nil
+genExprTree (Sub p q) = Node "-" (genExprTree p) (genExprTree q) Nil
+genExprTree (Mul p q) = Node "*" (genExprTree p) (genExprTree q) Nil
+genExprTree (Div p q) = Node "/" (genExprTree p) (genExprTree q) Nil
+genExprTree (Eq p q) = Node "==" (genExprTree p) (genExprTree q) Nil
+genExprTree (Lt p q) = Node "<" (genExprTree p) (genExprTree q) Nil
+genExprTree (Le p q) = Node "<=" (genExprTree p) (genExprTree q) Nil
+genExprTree (Gt p q) = Node ">" (genExprTree p) (genExprTree q) Nil
+genExprTree (Ge p q) = Node ">=" (genExprTree p) (genExprTree q) Nil
+genExprTree (Int p) = Node (show p) Nil Nil Nil
+genExprTree (Dou p) = Node (show p) Nil Nil Nil
+
+genStatTree :: Statement -> Tree String
+genStatTree (Begin p q) = Node "begin" (genStatTree p) (genStatsTree q) Nil
+genStatTree Skip = Node "skip" Nil Nil Nil
+genStatTree (Set p q) = Node "set" (genExprTree p) (genExprTree q) Nil
+genStatTree (If p q r) = Node "if" (genExprTree p) (genStatTree q) (genStatTree r)
+genStatTree (While p q) = Node "while" (genExprTree p) (genStatTree q) Nil
+
+genStatsTree :: Statements -> Tree String
+genStatsTree NilStat = Node "nil" Nil Nil Nil
+genStatsTree (List p q) = Node "statement_list" (genStatTree p) (genStatsTree q) Nil
+
+genProTree :: Program -> Tree String
+genProTree (Pro p) = Node "program" (genStatTree p) Nil Nil
+
+procStat :: Env -> Statement -> Env
+procStat env (Begin p q) = (procStats (procStat env p) q)
+procStat env (Skip) = env
+procStat env (Set var p) = (M.insert (eval var) (eval p) env)
+procStat env (If expr p q) = if evalBool (eval expr) then (procStat env p) else (procStat env q)
+procStat env (While expr p) = if evalBool (eval expr) then (procStat env p) else env
+    
+procStats :: Env -> Statements -> Env
+procStats env (NilStat) = env
+procStats env (List p q) = (procStats (procStat env p) q)
 
 defMain :: IO ()
 defMain = do
