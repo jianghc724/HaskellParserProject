@@ -253,7 +253,7 @@ stringParser = do
     lexeme $ Data.Attoparsec.Text.char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
     lexeme $ Data.Attoparsec.Text.char '\"'
-    return (St s)
+    return (St (showText s))
     
 setParser :: Parser Statement
 setParser = do
@@ -346,7 +346,7 @@ evalString (ExprString string) = string
 evalList :: ExprVal -> [ExprVal]
 evalList (ExprList list) = list
 evalPair :: ExprVal -> (ExprVal, ExprVal)
-evalPair (ExprList pair) = pair
+evalPair (ExprCons pair) = pair
 
 eval :: Expr -> ExprVal
 eval FalseLit = ExprBool False
@@ -366,8 +366,8 @@ eval (Sub p q) = ExprDou ((evalDou . eval p) - (evalDou . eval q))
 eval (Mul p q) = ExprDou ((evalDou . eval p) * (evalDou . eval q))
 eval (Div p q) = ExprDou ((evalDou . eval p) / (evalDou . eval q))
 
---eval NilLit = []
---eval Chr c = c
+eval NilLit = ()
+eval Chr c = c
 --eval St s = s
 --eval Cons e1 e2
  --   | eval e2 == [] = (eval e1):(eval e2)
