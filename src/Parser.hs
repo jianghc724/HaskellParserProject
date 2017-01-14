@@ -250,7 +250,7 @@ stringParser = do
     lexeme $ Data.Attoparsec.Text.char '\"'
     s <- takeWhile1 (\x -> if x == '\"' then True else False)
     lexeme $ Data.Attoparsec.Text.char '\"'
-    return (St s)
+    return (St (showText s))
     
 setParser :: Parser Statement
 setParser = do
@@ -342,8 +342,8 @@ evalString :: ExprVal -> String
 evalString (ExprString string) = string
 evalList :: ExprVal -> [ExprVal]
 evalList (ExprList list) = list
-evalPair :: ExprVal -> (ExprVal, ExprVal)
-evalPair (ExprList pair) = pair
+evalCons :: ExprVal -> (ExprVal, ExprVal)
+evalCons (ExprCons pair) = pair
 
 eval :: Expr -> Env -> ExprVal
 eval FalseLit env = ExprBool False
@@ -364,15 +364,13 @@ eval (Sub p q) env = ExprDou ((evalDou (eval p env)) - (evalDou (eval q env)))
 eval (Mul p q) env = ExprDou ((evalDou (eval p env)) * (evalDou (eval q env)))
 eval (Div p q) env = ExprDou ((evalDou (eval p env)) / (evalDou (eval q env)))
 
---eval NilLit = []
---eval Chr c = c
---eval St s = s
---eval Cons e1 e2
- --   | eval e2 == [] = (eval e1):(eval e2)
---    | head (eval e2) && (type . eval e1) == (type head (eval e2)) = (eval e1):(eval e2)
---    | otherwise (error "temp error")
---eval Car (Cons e1 e2) = eval e1
---eval Cdr (Cons e1 e2) = eval e2
+eval NilLit = ExprCons ()
+eval Ch c = ExprChar c
+eval St s = ExprString s 
+eval Cons e1 e2 = ExprCons (eval e1, eval e2)
+eval Car NilLit = ExprCons ()
+eval Car (Cons e1 e2) = eval e1
+eval Cdr (Cons e1 e2) = eval e2
 
 getExpr :: Either String Expr -> String
 getExpr (Left errStr) =  "not a valid expr: " ++ errStr
