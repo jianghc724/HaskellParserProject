@@ -333,22 +333,22 @@ instance Ord ExprVal where
     (>=) (ExprDou num1) (ExprDou num2) = num1 >= num2
     (>=) (ExprChar char1) (ExprChar char2) = char1 >= char2
     (>=) (ExprString string1) (ExprString string2) = string1 >= string2
-    (>=) (ExprList 1ist1) (ExprList 1ist2) = list1 >= list2
+    (>=) (ExprList list1) (ExprList list2) = list1 >= list2
     (>=) (ExprCons pair1) (ExprCons pair2) = pair1 >= pair2
     (>) (ExprDou num1) (ExprDou num2) = num1 > num2
     (>) (ExprChar char1) (ExprChar char2) = char1 > char2
     (>) (ExprString string1) (ExprString string2) = string1 > string2
-    (>) (ExprList 1ist1) (ExprList 1ist2) = list1 > list2
+    (>) (ExprList list1) (ExprList list2) = list1 > list2
     (>) (ExprCons pair1) (ExprCons pair2) = pair1 > pair2
     (<=) (ExprDou num1) (ExprDou num2) = num1 <= num2
     (<=) (ExprChar char1) (ExprChar char2) = char1 <= char2
     (<=) (ExprString string1) (ExprString string2) = string1 <= string2
-    (<=) (ExprList 1ist1) (ExprList 1ist2) = list1 <= list2
+    (<=) (ExprList list1) (ExprList list2) = list1 <= list2
     (<=) (ExprCons pair1) (ExprCons pair2) = pair1 <= pair2
     (<) (ExprDou num1) (ExprDou num2) = num1 < num2
     (<) (ExprChar char1) (ExprChar char2) = char1 < char2
     (<) (ExprString string1) (ExprString string2) = string1 < string2
-    (<) (ExprList 1ist1) (ExprList 1ist2) = list1 < list2
+    (<) (ExprList list1) (ExprList list2) = list1 < list2
     (<) (ExprCons pair1) (ExprCons pair2) = pair1 < pair2
     
 evalDou :: ExprVal -> Double
@@ -394,9 +394,9 @@ eval (Car (Cons e1 e2)) env = eval e1 env
 eval (Cdr NilLit) env = ExprNil
 eval (Cdr (Cons e1 e2)) env = eval e2 env
 
-getExpr :: Either String Expr -> Env -> String
-getExpr (Left errStr) env =  "not a valid expr: " ++ errStr
-getExpr (Right expr) env = show (eval expr env)
+getExpr :: Either String Expr -> Env -> Expr
+getExpr (Left errStr) env =  NilLit
+getExpr (Right expr) env = expr
 
 getStat :: Either String Statement -> Statement
 getStat (Left errStr) = Skip
@@ -407,6 +407,7 @@ getPro (Left errStr) = Pro Skip
 getPro (Right pro) = pro
 
 genExprTree :: Expr -> Tree String
+getExprTree (Var s) = Node s Nil Nil Nil
 genExprTree FalseLit = Node "False" Nil Nil Nil
 genExprTree TrueLit = Node "True" Nil Nil Nil
 genExprTree NilLit = Node "()" Nil Nil Nil
@@ -418,7 +419,7 @@ genExprTree (Cons TrueLit NilLit) = genExprTree TrueLit
 genExprTree (Cons e1 e2) = Node "cons" (genExprTree e1) (genExprTree e2) Nil
 genExprTree (Car NilLit) = Node "()" Nil Nil Nil
 genExprTree (Car (Cons e1 e2)) = genExprTree e1
-genExprTree (Car NilLit) = Node "()" Nil Nil Nil
+genExprTree (Cdr NilLit) = Node "()" Nil Nil Nil
 genExprTree (Cdr (Cons e1 e2)) = genExprTree e2
 genExprTree (Not p) = Node "not" (genExprTree p) Nil Nil
 genExprTree (And p q) = Node "and" (genExprTree p) (genExprTree q) Nil
@@ -435,10 +436,11 @@ genExprTree (Ge p q) = Node ">=" (genExprTree p) (genExprTree q) Nil
 genExprTree (Int p) = Node (show p) Nil Nil Nil
 genExprTree (Dou p) = Node (show p) Nil Nil Nil
 
+
 genStatTree :: Statement -> Tree String
 genStatTree (Begin p q) = Node "begin" (genStatTree p) (genStatsTree q) Nil
 genStatTree Skip = Node "skip" Nil Nil Nil
-genStatTree (Set p q) = Node "set" (genExprTree p) (genExprTree q) Nil
+genStatTree (Set (Var xs) q) = Node "set" (genExprTree (St xs)) (genExprTree q) Nil
 genStatTree (If p q r) = Node "if" (genExprTree p) (genStatTree q) (genStatTree r)
 genStatTree (While p q) = Node "while" (genExprTree p) (genStatTree q) Nil
 
@@ -476,5 +478,6 @@ defMain = do
     --putStrLn $ getExpr (parseOnly consParser "(cons \'a\' \'b\')") env
     --putStrLn "-------"
     --putStrLn $ getStat (parseOnly setParser "(set! a 1)")
-    let env = procPro M.empty (getPro (parseOnly whileParser "(begin (set! a 3) (if (< a 2) (set! b 1) (set! b 2)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
+    let env = procPro M.empty (getPro (parseOnly whileParser "(begin (set! a 1) (set! b (+ a 1)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
+    putStrLn (render (doc (genExprTree (getExpr (parseOnly exprParser "(+ a 1)") M.empty))))
     --putStrLn (evalString (fromJust (M.lookup (eval (St "a") M.empty) env)))

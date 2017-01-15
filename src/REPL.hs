@@ -11,7 +11,6 @@ import Data.Text
 import Text.PrettyPrint
 import Text.PrettyPrint.GenericPretty
 import Parser
-import PrettyTreePrint
 
 errorhandle :: Env -> String -> Env
 errorhandle env str = env
@@ -29,7 +28,7 @@ mainLoop env = do
     l <- getLine
     case Prelude.words l of
         ":i":pro -> do
-            mainLoop (either (errorhandle env) (procStat env) (parseOnly statParser (pack (getWord pro))))
+            mainLoop (either (errorhandle env) (procPro env) (parseOnly whileParser (pack (getWord pro))))
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do
