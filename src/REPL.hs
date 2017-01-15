@@ -10,6 +10,7 @@ import Data.Text.Internal
 import Data.Text
 import Text.PrettyPrint
 import Text.PrettyPrint.GenericPretty
+import Data.Either
 import Parser
 
 errorhandle :: Env -> String -> Env
@@ -27,16 +28,31 @@ getWord x
 
 --getProEnv :: Either Env ExprVal -> 
 
+getLeft :: Either Env ExprVal -> Env
+getLeft (Left env) = env
+getLeft (Right s) = M.empty
+
+getRight :: Either Env ExprVal -> ExprVal
+getRight (Left x) = ExprString "error"
+getRight (Right x) = x
+
 mainLoop :: Env -> String -> IO ()
 mainLoop env lastSentence = do
     putStr "> "
     hFlush stdout
     l <- getLine
     case Prelude.words l of
-        ":i":pro -> do 
-            putStrLn $ show $ procPro env (getPro (parseOnly allParser (pack (getWord pro)))) 
-            --putStrLn $ show $ (procPro env) (parseOnly allParser (pack (getWord pro)))
-            --mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro)))) pro
+        ":i":pro -> do
+            --putStrLn $ show (procPro env (getPro(parseOnly allParser (pack (getWord pro)))))
+            if isLeft res
+                then do
+                    putStrLn "program complete"
+                    mainLoop (getLeft res) (getWord pro)
+                else do
+                    putStrLn "eval complete"
+                    putStrLn $ show (getRight res)
+                    mainLoop env (getWord pro)
+            where res = (procPro env (getPro (parseOnly allParser (pack (getWord pro)))))
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do
