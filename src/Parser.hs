@@ -57,6 +57,7 @@ data Statements
     
 data Program
     = Pro Statement
+    | Cal Expr
     deriving Show
 
 --data Number = Integer
@@ -88,10 +89,18 @@ statParser = setParser <|> skipParser <|> ifParser <|> whilestatParser <|> statl
 statsParser :: Parser Statements
 statsParser = statslistParser <|> nilParser
 
+allParser :: Parser Program
+allParser = whileParser <|> calParser
+
 whileParser :: Parser Program
 whileParser = do
     stat <- statParser
     return (Pro stat)
+    
+calParser :: Parser Program
+calParser = do
+    expr <- exprParser
+    return (Cal expr)
             
 variableParser :: Parser Expr
 variableParser = do
@@ -450,6 +459,7 @@ genStatsTree (List p q) = Node "statement_list" (genStatTree p) (genStatsTree q)
 
 genProTree :: Program -> Tree String
 genProTree (Pro p) = Node "program" (genStatTree p) Nil Nil
+genProTree (Cal p) = Node "program" (genExprTree p) Nil Nil
 
 procStat :: Env -> Statement -> Env
 procStat env (Begin p q) = (procStats (procStat env p) q)
@@ -462,8 +472,9 @@ procStats :: Env -> Statements -> Env
 procStats env (NilStat) = env
 procStats env (List p q) = (procStats (procStat env p) q)
 
-procPro :: Env -> Program -> Env
-procPro env (Pro p) = procStat env p
+procPro :: Env -> Program -> Either Env ExprVal
+procPro env (Pro p) = Left (procStat env p)
+procPro env (Cal p) = Right (eval p env)
 
 defMain :: IO ()
 defMain = do
@@ -476,8 +487,8 @@ defMain = do
     --putStrLn $ getExpr (parseOnly charParser "\'a\'" ) env
     --putStrLn $ getExpr (parseOnly stringParser "\"abc\"") env
     --putStrLn $ getExpr (parseOnly consParser "(cons \'a\' \'b\')") env
-    --putStrLn "-------"
+    putStrLn "-------"
     --putStrLn $ getStat (parseOnly setParser "(set! a 1)")
-    let env = procPro M.empty (getPro (parseOnly whileParser "(begin (set! a 1) (set! b (+ a 1)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
-    putStrLn (render (doc (genProTree (getPro (parseOnly whileParser "(begin (set! a 1) (while (< a 10) (set! a (+ a 1))))")))))
+    --let env = procPro M.empty (getPro (parseOnly allParser "(begin (set! a 1) (set! b (+ a 1)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
+    --putStrLn (render (doc (genProTree (getPro (parseOnly allParser "(begin (set! a 1) (while (< a 10) (set! a (+ a 1))))")))))
     --putStrLn (evalString (fromJust (M.lookup (eval (St "a") M.empty) env)))
