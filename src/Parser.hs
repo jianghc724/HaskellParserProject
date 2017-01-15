@@ -407,7 +407,7 @@ getPro (Left errStr) = Pro Skip
 getPro (Right pro) = pro
 
 genExprTree :: Expr -> Tree String
-getExprTree (Var s) = Node s Nil Nil Nil
+genExprTree (Var s) = Node s Nil Nil Nil
 genExprTree FalseLit = Node "False" Nil Nil Nil
 genExprTree TrueLit = Node "True" Nil Nil Nil
 genExprTree NilLit = Node "()" Nil Nil Nil
@@ -440,7 +440,7 @@ genExprTree (Dou p) = Node (show p) Nil Nil Nil
 genStatTree :: Statement -> Tree String
 genStatTree (Begin p q) = Node "begin" (genStatTree p) (genStatsTree q) Nil
 genStatTree Skip = Node "skip" Nil Nil Nil
-genStatTree (Set (Var xs) q) = Node "set" (genExprTree (St xs)) (genExprTree q) Nil
+genStatTree (Set p q) = Node "set" (genExprTree p) (genExprTree q) Nil
 genStatTree (If p q r) = Node "if" (genExprTree p) (genStatTree q) (genStatTree r)
 genStatTree (While p q) = Node "while" (genExprTree p) (genStatTree q) Nil
 
@@ -479,5 +479,5 @@ defMain = do
     --putStrLn "-------"
     --putStrLn $ getStat (parseOnly setParser "(set! a 1)")
     let env = procPro M.empty (getPro (parseOnly whileParser "(begin (set! a 1) (set! b (+ a 1)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
-    putStrLn (render (doc (genExprTree (getExpr (parseOnly exprParser "(+ a 1)") M.empty))))
+    putStrLn (render (doc (genProTree (getPro (parseOnly whileParser "(begin (set! a 1) (while (< a 10) (set! a (+ a 1))))")))))
     --putStrLn (evalString (fromJust (M.lookup (eval (St "a") M.empty) env)))
