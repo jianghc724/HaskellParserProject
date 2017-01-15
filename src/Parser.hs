@@ -311,7 +311,7 @@ lexeme p = do
     skipSpace
     p
 
-data ExprVal = ExprDou Double | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal)
+data ExprVal = ExprDou Double | ExprBool Bool | ExprChar Char | ExprString String | ExprList [ExprVal] | ExprCons (ExprVal, ExprVal) | ExprNil
 instance Show ExprVal where
     show (ExprDou num) = show num
     show (ExprBool bool) = show bool
@@ -319,6 +319,7 @@ instance Show ExprVal where
     show (ExprString string) = show string
     show (ExprList list) = show list
     show (ExprCons pair) = show pair
+    show ExprNil = show ()
 
 instance Eq ExprVal where
     (==) (ExprDou num1) (ExprDou num2) = num1 == num2
@@ -332,15 +333,23 @@ instance Ord ExprVal where
     (>=) (ExprDou num1) (ExprDou num2) = num1 >= num2
     (>=) (ExprChar char1) (ExprChar char2) = char1 >= char2
     (>=) (ExprString string1) (ExprString string2) = string1 >= string2
+    (>=) (ExprList 1ist1) (ExprList 1ist2) = list1 >= list2
+    (>=) (ExprCons pair1) (ExprCons pair2) = pair1 >= pair2
     (>) (ExprDou num1) (ExprDou num2) = num1 > num2
     (>) (ExprChar char1) (ExprChar char2) = char1 > char2
     (>) (ExprString string1) (ExprString string2) = string1 > string2
+    (>) (ExprList 1ist1) (ExprList 1ist2) = list1 > list2
+    (>) (ExprCons pair1) (ExprCons pair2) = pair1 > pair2
     (<=) (ExprDou num1) (ExprDou num2) = num1 <= num2
     (<=) (ExprChar char1) (ExprChar char2) = char1 <= char2
     (<=) (ExprString string1) (ExprString string2) = string1 <= string2
+    (<=) (ExprList 1ist1) (ExprList 1ist2) = list1 <= list2
+    (<=) (ExprCons pair1) (ExprCons pair2) = pair1 <= pair2
     (<) (ExprDou num1) (ExprDou num2) = num1 < num2
     (<) (ExprChar char1) (ExprChar char2) = char1 < char2
     (<) (ExprString string1) (ExprString string2) = string1 < string2
+    (<) (ExprList 1ist1) (ExprList 1ist2) = list1 < list2
+    (<) (ExprCons pair1) (ExprCons pair2) = pair1 < pair2
     
 evalDou :: ExprVal -> Double
 evalDou (ExprDou num) = num
@@ -373,16 +382,16 @@ eval (Add p q) env = ExprDou ((evalDou (eval p env)) + (evalDou (eval q env)))
 eval (Sub p q) env = ExprDou ((evalDou (eval p env)) - (evalDou (eval q env)))
 eval (Mul p q) env = ExprDou ((evalDou (eval p env)) * (evalDou (eval q env)))
 eval (Div p q) env = ExprDou ((evalDou (eval p env)) / (evalDou (eval q env)))
---eval NilLit env = ExprCons ()::(ExprVal, ExprVal)
+eval NilLit env = ExprNil
 eval (Ch c) env = ExprChar c
 eval (St s) env = ExprString s
 eval (Cons (Dou d) NilLit) env = eval (Dou d) env
 eval (Cons FalseLit NilLit) env = eval FalseLit env
 eval (Cons TrueLit NilLit) env = eval TrueLit env
 eval (Cons e1 e2) env = ExprCons ((eval e1 env), (eval e2 env))
---eval (Car NilLit) env = ExprCons ()::(ExprVal, ExprVal)
+eval (Car NilLit) env = ExprNil
 eval (Car (Cons e1 e2)) env = eval e1 env
---eval (Cdr NilLit) env = ExprCons ()::(ExprVal, ExprVal)
+eval (Cdr NilLit) env = ExprNil
 eval (Cdr (Cons e1 e2)) env = eval e2 env
 
 getExpr :: Either String Expr -> Env -> String
