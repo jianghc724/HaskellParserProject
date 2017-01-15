@@ -140,7 +140,7 @@ defMain = do
     case args of
         ["-repl"] -> do
             putStrLn "Welcome to REPL mode. Be my guest!"
-            --mainLoop(M.empty)
+            mainLoop (M.empty) ""
         _ -> do
             processFile $ fromJust (runStateT parseOption args)
     --print $ show (parseOption args)

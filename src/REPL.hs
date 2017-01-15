@@ -25,22 +25,22 @@ getWord x
 --procPro env (Pro p) = Left (procStat env p)
 --procPro env (Cal p) = Right (eval p env)
 
---getProEnv :: Either Env ExprVal ->
+--getProEnv :: Either Env ExprVal -> 
 
-mainLoop :: Env -> IO ()
-mainLoop env = do
+mainLoop :: Env -> String -> IO ()
+mainLoop env lastSentence = do
     putStr "> "
     hFlush stdout
     l <- getLine
     case Prelude.words l of
         ":i":pro -> do 
-            putStrLn "loop"
-            --mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro))))
+            putStrLn $ show $ (procPro env) (parseOnly allParser (pack (getWord pro)))
+            mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro)))) pro
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do
             putStrLn "unrecognized command!"
-            mainLoop env
+            mainLoop env lastSentence
             
 --defMain :: IO ()
 --defMain = do
