@@ -53,7 +53,14 @@ mainLoop env lastSentence = do
                     putStrLn $ show (getRight res)
                     mainLoop env (getWord pro)
             where res = (procPro env (getPro (parseOnly allParser (pack (getWord pro)))))
-        [":t"] -> putStrLn "To do"
+        [":t"] -> do 
+            if lastSentence == "" 
+                then do 
+                    putStrLn "error"
+                    mainLoop env ""
+                else do 
+                    putStrLn (render (doc (genProTree (getPro (parseOnly allParser (pack lastSentence))))))
+                    mainLoop env lastSentence
         [":q"] -> putStrLn "Bye~"
         _ -> do
             putStrLn "unrecognized command!"
