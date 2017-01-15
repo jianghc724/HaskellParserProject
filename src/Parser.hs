@@ -407,7 +407,7 @@ getPro (Left errStr) = Pro Skip
 getPro (Right pro) = pro
 
 genExprTree :: Expr -> Tree String
-getExprTree (Var s) = Node s Nil Nil Nil
+genExprTree (Var s) = Node s Nil Nil Nil
 genExprTree FalseLit = Node "False" Nil Nil Nil
 genExprTree TrueLit = Node "True" Nil Nil Nil
 genExprTree NilLit = Node "()" Nil Nil Nil
