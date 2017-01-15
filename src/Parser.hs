@@ -476,8 +476,8 @@ procPro :: Env -> Program -> Either Env ExprVal
 procPro env (Pro p) = Left (procStat env p)
 procPro env (Cal p) = Right (eval p env)
 
-defMain :: IO ()
-defMain = do
+--defMain :: IO ()
+--defMain = do
     
     --putStrLn $ getExpr (parseOnly notParser "(not True)") env
     --putStrLn $ getExpr (parseOnly addParser "(+ 1.2 2.2 )") env 
@@ -487,7 +487,7 @@ defMain = do
     --putStrLn $ getExpr (parseOnly charParser "\'a\'" ) env
     --putStrLn $ getExpr (parseOnly stringParser "\"abc\"") env
     --putStrLn $ getExpr (parseOnly consParser "(cons \'a\' \'b\')") env
-    putStrLn "-------"
+--    putStrLn "-------"
     --putStrLn $ getStat (parseOnly setParser "(set! a 1)")
     --let env = procPro M.empty (getPro (parseOnly allParser "(begin (set! a 1) (set! b (+ a 1)))")) in putStrLn (show (fromJust (M.lookup (eval (St "b") M.empty) env)))
     --putStrLn (render (doc (genProTree (getPro (parseOnly allParser "(begin (set! a 1) (while (< a 10) (set! a (+ a 1))))")))))

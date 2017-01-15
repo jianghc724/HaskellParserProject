@@ -1,16 +1,21 @@
 module Lib where
 
 import REPL
-import FileIO
+import Parser
 import qualified Data.Map as M
 
 import Control.Applicative
 import Control.Monad.State
 import System.Environment
 
+import System.IO
+import Data.Char(toUpper)
+import Data.Maybe
+
 data Option = Option {
     inPath :: String,
-    outPath :: String
+    outPath :: String,
+    optType :: String
 }
     deriving Show
 
@@ -43,17 +48,108 @@ parseInPath = parseField "in"
 parseOutPath :: Parser String
 parseOutPath = parseField "out"
 
-parseOption :: Parser Option
-parseOption = p0 <|> p1 where
+parseTreePath :: Parser String
+parseTreePath = parseField "tree"
+
+parseReplPath :: Parser String
+parseReplPath = parseField "repl"
+
+--parseOption :: Parser Option
+parseOption = p0 <|> p1 <|> p2 <|>p3 <|> p4 <|> p5 <|>p6 where
     p0 = do
         i <- parseInPath
         o <- parseOutPath
-        return (Option i o)
-        
+        return (Option i o "in")
+
     p1 = do
+        i <- parseInPath
+        return (Option i "" "in")
+        
+    p2 = do
         o <- parseOutPath
         i <- parseInPath
-        return (Option i o)
+        return (Option i o "in")
+
+    p3 = do
+        i <- parseTreePath
+        return (Option i "" "tree")
+
+    p4 = do
+        i <- parseTreePath
+        o <- parseOutPath
+        return (Option i o "tree")
+
+    p5 = do
+        o <- parseOutPath
+        i <- parseTreePath
+        return (Option i o "tree")
+
+    p6 = do
+        return (Option "" "" "repl")
+
+--processFile :: Option -> IO()
+processFile (Option inPath outPath optType,strlis) = do
+    --if (inPath != "") && (outPath != "") then 
+    --    do inh <- openFile inPath ReadMode
+    --       ouh <- openFile outPath WriteMode
+    case optType of
+        "in" -> do inh <- openFile inPath ReadMode
+                   if outPath == ""
+                       then do stdProcessLine inh
+                               hClose inh
+                               --hClose ouh
+                       else do ouh <- openFile outPath WriteMode
+                               processLine inh ouh
+                               hClose inh
+                               hClose ouh
+        "tree" -> do inh <- openFile inPath ReadMode
+                     if outPath == ""
+                         then do stdProcessLine inh
+                                 hClose inh
+                               --hClose ouh
+                         else do ouh <- openFile outPath WriteMode
+                                 processLine inh ouh
+                                 hClose inh
+                                 hClose ouh
+        "repl" -> putStrLn "This is a simple REPL. Be my guest!"
+
+processLine :: Handle -> Handle -> IO()
+processLine inh ouh = 
+    do isEof <- hIsEOF inh
+       if isEof 
+            then return()
+            else do lineStr <- hGetLine inh
+                    hPutStrLn ouh (map toUpper lineStr)
+                    processLine inh ouh
+
+stdProcessLine :: Handle -> IO()
+stdProcessLine inh = 
+    do isEof <- hIsEOF inh
+       if isEof 
+            then return()
+            else do lineStr <- hGetLine inh
+                    putStrLn $ show $ getPro (parseOnly whileParser lineStr) 
+                    --putStrLn (map toUpper lineStr)
+                    stdProcessLine inh 
+
+defMain :: IO ()
+defMain = do
+    args <- getArgs
+    print args
+    case args of
+        ["-repl"] -> do
+            putStrLn "Welcome to REPL mode. Be my guest!"
+            --mainLoop(M.empty)
+        _ -> do
+            processFile $ fromJust (runStateT parseOption args)
+    --print $ show (parseOption args)
+    --processFile $ fromJust (runStateT parseOption args)
+    print $ fromJust (runStateT parseOption args)
+    
+    --print $ type (parseOption args)
+    putStrLn "This is a simple REPL. Be my guest!"
+    --mainLoop (M.empty)
+
 
 --defMain :: IO ()
 --defMain = do

@@ -27,15 +27,16 @@ mainLoop env = do
     hFlush stdout
     l <- getLine
     case Prelude.words l of
-        ":i":pro -> do
-            mainLoop (either (errorhandle env) (procPro env) (parseOnly whileParser (pack (getWord pro))))
+        ":i":pro -> do 
+            putStrLn "loop"
+            --mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro))))
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do
             putStrLn "unrecognized command!"
             mainLoop env
             
-defMain :: IO ()
-defMain = do
-    putStrLn "This is a simple REPL. Be my guest!"
-    mainLoop (M.empty)
+--defMain :: IO ()
+--defMain = do
+--    putStrLn "This is a simple REPL. Be my guest!"
+--    mainLoop (M.empty)

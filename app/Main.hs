@@ -1,7 +1,7 @@
 module Main where
 
 import Lib
-import Parser
+--import Parser
 
 
 main :: IO ()
