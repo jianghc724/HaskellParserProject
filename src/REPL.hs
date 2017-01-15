@@ -34,8 +34,9 @@ mainLoop env lastSentence = do
     l <- getLine
     case Prelude.words l of
         ":i":pro -> do 
-            putStrLn $ show $ (procPro env) (parseOnly allParser (pack (getWord pro)))
-            mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro)))) pro
+            putStrLn $ show $ procPro env (getPro (parseOnly allParser (pack (getWord pro)))) 
+            --putStrLn $ show $ (procPro env) (parseOnly allParser (pack (getWord pro)))
+            --mainLoop (either (errorhandle env) (procPro env) (parseOnly allParser (pack (getWord pro)))) pro
         [":t"] -> putStrLn "To do"
         [":q"] -> putStrLn "Bye~"
         _ -> do
