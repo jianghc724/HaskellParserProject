@@ -164,9 +164,10 @@ defMain = do
     putStrLn "The input path info is:"
     print $ fromJust (runStateT parseOption args)
     case args of
-        ["-repl"] -> do
+        ["--repl"] -> do
             putStrLn "Welcome to REPL mode. Be my guest!"
-            mainLoop (M.empty) ""
+            mainLoop (M.empty) "" 
+            putStrLn "ddd"
         _ -> do
             processFile $ fromJust (runStateT parseOption args)
     putStrLn "Thanks for using！"
