@@ -42,7 +42,7 @@ mainLoop env lastSentence = do
     hFlush stdout
     l <- getLine
     case Prelude.words l of
-        ":i":pro -> do 
+        ":i":pro -> do
             --putStrLn $ show (procPro env (getPro(parseOnly allParser (pack (getWord pro)))))
             if isLeft res
                 then do

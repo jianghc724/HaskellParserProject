@@ -13,6 +13,8 @@ import Data.Char(toUpper)
 import Data.Text(pack)
 import Data.Maybe
 import Data.Attoparsec.Text
+import Text.PrettyPrint
+import Text.PrettyPrint.GenericPretty
 
 data Option = Option {
     inPath :: String,
@@ -27,19 +29,19 @@ parseFlag :: String -> ParserI String
 parseFlag f = do
     args <- get
     case args of
-        [] -> empty
+        [] -> Control.Applicative.empty
         (arg : args')
             | arg == "--" ++ f -> do
                 put args'
                 return f
-            | otherwise -> empty
+            | otherwise -> Control.Applicative.empty
             
 parseField :: String -> ParserI String
 parseField f = do
     parseFlag f
     args <- get
     case args of
-        [] -> empty
+        [] -> Control.Applicative.empty
         (arg : args') -> do
             put args'
             return arg
@@ -97,41 +99,59 @@ processFile (Option inPath outPath optType,strlis) = do
     case optType of
         "in" -> do inh <- openFile inPath ReadMode
                    if outPath == ""
-                       then do stdProcessLine inh
+                       then do stdinProcessLine inh
                                hClose inh
                                --hClose ouh
                        else do ouh <- openFile outPath WriteMode
-                               processLine inh ouh
+                               inProcessLine inh ouh
                                hClose inh
                                hClose ouh
         "tree" -> do inh <- openFile inPath ReadMode
                      if outPath == ""
-                         then do stdProcessLine inh
+                         then do stdtreeProcessLine inh
                                  hClose inh
                                --hClose ouh
                          else do ouh <- openFile outPath WriteMode
-                                 processLine inh ouh
+                                 treeProcessLine inh ouh
                                  hClose inh
                                  hClose ouh
         "repl" -> putStrLn "This is a simple REPL. Be my guest!"
 
-processLine :: Handle -> Handle -> IO()
-processLine inh ouh = 
+inProcessLine :: Handle -> Handle -> IO()
+inProcessLine inh ouh = 
     do isEof <- hIsEOF inh
        if isEof 
             then return()
             else do lineStr <- hGetLine inh
                     hPutStrLn ouh $ show $ procPro M.empty (getPro (parseOnly allParser (pack lineStr))) 
-                    processLine inh ouh
+                    inProcessLine inh ouh
 
-stdProcessLine :: Handle -> IO()
-stdProcessLine inh = 
+stdinProcessLine :: Handle -> IO()
+stdinProcessLine inh = 
     do isEof <- hIsEOF inh
        if isEof 
             then return()
             else do lineStr <- hGetLine inh
                     putStrLn $ show $ procPro M.empty (getPro (parseOnly allParser (pack lineStr))) 
-                    stdProcessLine inh 
+                    stdinProcessLine inh 
+
+treeProcessLine :: Handle -> Handle -> IO()
+treeProcessLine inh ouh = 
+    do isEof <- hIsEOF inh
+       if isEof 
+            then return()
+            else do lineStr <- hGetLine inh
+                    hPutStrLn ouh (render (doc (genProTree (getPro (parseOnly allParser (pack lineStr))))))
+                    treeProcessLine inh ouh
+
+stdtreeProcessLine :: Handle -> IO()
+stdtreeProcessLine inh = 
+    do isEof <- hIsEOF inh
+       if isEof 
+            then return()
+            else do lineStr <- hGetLine inh
+                    putStrLn (render (doc (genProTree (getPro (parseOnly allParser (pack lineStr))))))
+                    stdtreeProcessLine inh 
 
 defMain :: IO ()
 defMain = do
