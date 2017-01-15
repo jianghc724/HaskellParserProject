@@ -10,7 +10,9 @@ import System.Environment
 
 import System.IO
 import Data.Char(toUpper)
+import Data.Text(pack)
 import Data.Maybe
+import Data.Attoparsec.Text
 
 data Option = Option {
     inPath :: String,
@@ -19,9 +21,9 @@ data Option = Option {
 }
     deriving Show
 
-type Parser a = StateT [String] Maybe a
+type ParserI a = StateT [String] Maybe a
 
-parseFlag :: String -> Parser String
+parseFlag :: String -> ParserI String
 parseFlag f = do
     args <- get
     case args of
@@ -32,7 +34,7 @@ parseFlag f = do
                 return f
             | otherwise -> empty
             
-parseField :: String -> Parser String
+parseField :: String -> ParserI String
 parseField f = do
     parseFlag f
     args <- get
@@ -42,16 +44,16 @@ parseField f = do
             put args'
             return arg
             
-parseInPath :: Parser String
+parseInPath :: ParserI String
 parseInPath = parseField "in"
 
-parseOutPath :: Parser String
+parseOutPath :: ParserI String
 parseOutPath = parseField "out"
 
-parseTreePath :: Parser String
+parseTreePath :: ParserI String
 parseTreePath = parseField "tree"
 
-parseReplPath :: Parser String
+parseReplPath :: ParserI String
 parseReplPath = parseField "repl"
 
 --parseOption :: Parser Option
@@ -119,7 +121,7 @@ processLine inh ouh =
        if isEof 
             then return()
             else do lineStr <- hGetLine inh
-                    hPutStrLn ouh (map toUpper lineStr)
+                    hPutStrLn ouh $ show $ procPro M.empty (getPro (parseOnly allParser (pack lineStr))) 
                     processLine inh ouh
 
 stdProcessLine :: Handle -> IO()
@@ -128,8 +130,7 @@ stdProcessLine inh =
        if isEof 
             then return()
             else do lineStr <- hGetLine inh
-                    putStrLn $ show $ getPro (parseOnly whileParser lineStr) 
-                    --putStrLn (map toUpper lineStr)
+                    putStrLn $ show $ procPro M.empty (getPro (parseOnly allParser (pack lineStr))) 
                     stdProcessLine inh 
 
 defMain :: IO ()
@@ -147,7 +148,7 @@ defMain = do
     print $ fromJust (runStateT parseOption args)
     
     --print $ type (parseOption args)
-    putStrLn "This is a simple REPL. Be my guest!"
+    --putStrLn "This is a simple REPL. Be my guest!"
     --mainLoop (M.empty)
 
 

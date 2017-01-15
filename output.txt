@@ -1,0 +1,2 @@
+Right 2.0
+Left (fromList [("a",1.0),("b",2.0)])
