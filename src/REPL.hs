@@ -21,6 +21,12 @@ getWord x
     | Prelude.length x == 1 = Prelude.head x
     | otherwise = Prelude.head x ++ " " ++ getWord (Prelude.tail x) 
 
+procPro :: Env -> Program -> Either Env ExprVal
+procPro env (Pro p) = Left (procStat env p)
+procPro env (Cal p) = Right (eval p env)
+
+getProEnv :: Either Env ExprVal ->
+
 mainLoop :: Env -> IO ()
 mainLoop env = do
     putStr "> "
