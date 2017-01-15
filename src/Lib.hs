@@ -101,20 +101,24 @@ processFile (Option inPath outPath optType,strlis) = do
                    if outPath == ""
                        then do stdinProcessLine inh
                                hClose inh
+                               putStrLn "The value results have finished writting."
                                --hClose ouh
                        else do ouh <- openFile outPath WriteMode
                                inProcessLine inh ouh
                                hClose inh
                                hClose ouh
+                               putStrLn "The value results have been written to the output file."
         "tree" -> do inh <- openFile inPath ReadMode
                      if outPath == ""
                          then do stdtreeProcessLine inh
                                  hClose inh
+                                 putStrLn "The Syntax Trees have finished writting."
                                --hClose ouh
                          else do ouh <- openFile outPath WriteMode
                                  treeProcessLine inh ouh
                                  hClose inh
                                  hClose ouh
+                                 putStrLn "The Syntax Trees have been written to the output file."
         "repl" -> putStrLn "This is a simple REPL. Be my guest!"
 
 inProcessLine :: Handle -> Handle -> IO()
