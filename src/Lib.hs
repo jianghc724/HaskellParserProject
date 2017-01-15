@@ -157,29 +157,17 @@ defMain :: IO ()
 defMain = do
     args <- getArgs
     print args
+    putStrLn "The input path info is:"
+    print $ fromJust (runStateT parseOption args)
     case args of
         ["-repl"] -> do
             putStrLn "Welcome to REPL mode. Be my guest!"
             mainLoop (M.empty) ""
         _ -> do
             processFile $ fromJust (runStateT parseOption args)
-    --print $ show (parseOption args)
-    --processFile $ fromJust (runStateT parseOption args)
-    print $ fromJust (runStateT parseOption args)
+    putStrLn "Thanks for using！"
+   
     
-    --print $ type (parseOption args)
-    --putStrLn "This is a simple REPL. Be my guest!"
-    --mainLoop (M.empty)
-
-
---defMain :: IO ()
---defMain = do
---    args <- getArgs
---    print args
---    --print parseOption args
---    print $ runStateT parseOption args
---    putStrLn "This is a simple REPL. Be my guest!"
---    --mainLoop (M.empty)
-
+   
 
 
